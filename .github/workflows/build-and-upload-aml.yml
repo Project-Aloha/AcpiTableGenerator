@@ -90,8 +90,30 @@ jobs:
             name: aml-all
             path: ./
 
+        - name: Find per-platform directory
+          id: find
+          run: |
+            set -euo pipefail
+            PLATFORM="${{ matrix.platform }}"
+            echo "Searching for platform directory: $PLATFORM"
+            # Try several candidate locations that may exist depending on how the artifact was uploaded
+            if [ -d "aml-all/artifacts/$PLATFORM" ]; then
+              echo "Found at aml-all/artifacts/$PLATFORM"
+              echo "path=aml-all/artifacts/$PLATFORM" >> $GITHUB_OUTPUT
+            elif [ -d "artifacts/$PLATFORM" ]; then
+              echo "Found at artifacts/$PLATFORM"
+              echo "path=artifacts/$PLATFORM" >> $GITHUB_OUTPUT
+            elif [ -d "$PLATFORM" ]; then
+              echo "Found at $PLATFORM"
+              echo "path=$PLATFORM" >> $GITHUB_OUTPUT
+            else
+              echo "platform_path not found for $PLATFORM"
+              echo "path=" >> $GITHUB_OUTPUT
+            fi
+
         - name: Upload per-platform artifact
+          if: steps.find.outputs.path != ''
           uses: actions/upload-artifact@v4
           with:
             name: ${{ matrix.platform }}
-            path: aml-all/artifacts/${{ matrix.platform }}
+            path: ${{ steps.find.outputs.path }}
