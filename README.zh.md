@@ -1,29 +1,29 @@
 # acpi-table-generator
 
-**English** | **[简体中文](README.zh.md)**
+**[English](README.md)** | **简体中文**
 
 ---
 
-**Universal ACPI Topology Builder** - Dynamically generate ACPI tables for arbitrary complex CPU topologies using C
+**通用 ACPI 拓扑构建器** - 使用 C 动态生成支持任意复杂 CPU 拓扑的 ACPI 表
 
-## ✨ Features
+## ✨ 特性
 
-- **🔧 Universal Topology Builder** - Single codebase supports multiple cache architectures (Shared L2, Per-Cluster L2, Per-Core L2, Shared L3)
-- **🎯 Zero Hardcoding** - Fully driven by macro definitions, automatically detects topology features
-- **🔄 Heterogeneous Support** - Supports mixed configurations of different core types (P-Core/M-Core/E-Core)
-- **📐 Flexible Hierarchy** - Supports arbitrary combinations of 2-4 clusters and 2-4 level cache hierarchies
-- **✅ Automated Validation** - Integrated iasl disassembly and Python validation tools
-- **🚀 CMake Build** - Multi-platform parallel compilation, automatically generates AML and DSL
+- **🔧 通用拓扑构建器** - 单一代码库支持多种缓存架构（共享 L2、Per-Cluster L2、Per-Core L2、共享 L3）
+- **🎯 零硬编码** - 完全由宏定义驱动，自动检测拓扑特性
+- **🔄 异构支持** - 支持 P-Core/M-Core/E-Core 等不同类型核心的混合配置
+- **📐 灵活层次** - 支持 2-4 cluster 和 2-4 级缓存层次结构的任意组合
+- **✅ 自动验证** - 集成 iasl 反编译和 Python 验证工具
+- **🚀 CMake 构建** - 多平台并行编译，自动生成 AML 和 DSL
 
-## 📖 Documentation
+## 📖 文档导航
 
-- **[Testing Guide (TESTING.md)](TESTING.md)** - Complete testing tools and validation methods
-- **[Architecture Design (ARCHITECTURE.md)](ARCHITECTURE.md)** - Design details of universal topology builder
+- **[测试指南 (TESTING.md)](TESTING.md)** - 完整的测试工具和验证方法
+- **[架构设计 (ARCHITECTURE.md)](ARCHITECTURE.md)** - 通用拓扑构建器的设计细节
 
-## 🏗️ Supported Platforms
+## 🏗️ 支持的平台
 
-| Platform | SoC | Architecture | Cores | L2 Type | L3 | File Size |
-|----------|-----|--------------|-------|---------|----|----|
+| 平台 | SoC | 架构 | 核心数 | L2 类型 | L3 | 文件大小 |
+|------|-----|------|--------|---------|----|----|
 | **SM8150** | Snapdragon 855 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 2MB | 1044 bytes |
 | **SM8250** | Snapdragon 865 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 1044 bytes |
 | **SM8350** | Snapdragon 888 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 1044 bytes |
@@ -34,15 +34,15 @@
 | **SM8750** | Snapdragon 8 Elite Gen 2 | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 832 bytes |
 | **SM8850** | Snapdragon 8 Elite | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 832 bytes |
 
-### L2 Cache Architecture
+### L2 缓存架构说明
 
 - **Per-Core L2**: 每个 CPU 核心有独立的 L2 缓存（可通过相同大小/属性实现 2-way 共享）
 - **Per-Cluster L2**: 每个 Cluster 的所有核心共享一个 L2 缓存
 - **Shared L2**: 所有核心共享单个 L2 缓存
 
-## 🚀 Quick Start (5 Minutes)
+## 🚀 快速开始（5 分钟上手）
 
-### Step 1: Clone and Build
+### 第一步：克隆和构建
 
 ```bash
 git clone https://github.com/Project-Aloha/acpi-table-generator.git
@@ -52,7 +52,7 @@ cmake ..
 make
 ```
 
-### Step 2: Generate PPTT Tables
+### 第二步：生成 PPTT 表
 
 ```bash
 # 生成 SM8850 的 PPTT
@@ -66,7 +66,7 @@ ls -lh sm8850/builtin/PPTT.aml
 ls -lh sm8550/builtin/PPTT.aml
 ```
 
-### Step 3: View Decompiled Results
+### 第三步：查看反编译结果
 
 ```bash
 # 查看 SM8850 拓扑
@@ -76,7 +76,7 @@ cat sm8850/src/PPTT.dsl | head -100
 cat sm8550/src/PPTT.dsl | head -100
 ```
 
-### Step 4: Run Tests
+### 第四步：运行测试
 
 使用跨平台的 Python 测试脚本（详见 [TESTING.md](TESTING.md)）：
 
@@ -91,7 +91,7 @@ python3 ../test/verify_topology.py
 python3 ../test/aml_validator.py
 ```
 
-## 📂 Directory Structure
+## 📂 目录结构
 
 ```
 .
@@ -132,11 +132,11 @@ python3 ../test/aml_validator.py
 └── requirements.txt        # Python 依赖
 ```
 
-## 🛠️ Adding New Platform
+## 🛠️ 添加新平台
 
 ### 方法 1: 手动创建配置文件
 
-#### Step 1: Create Platform Configuration Header
+#### 步骤 1：创建平台配置头文件
 
 在 `include/` 下创建新目录并复制模板：
 
@@ -148,7 +148,7 @@ mkdir include/sm8xxx
 cp include/sm8850/pptt.h include/sm8xxx/pptt.h
 ```
 
-#### Step 2: Modify Platform Configuration
+#### 步骤 2：修改平台配置
 
 编辑 `include/sm8xxx/pptt.h`，根据实际硬件修改：
 
@@ -210,7 +210,7 @@ cp include/sm8850/pptt.h include/sm8xxx/pptt.h
 #define CACHE_LINE_SIZE                 64
 ```
 
-#### Step 3: Update CMakeLists.txt
+#### 步骤 3：更新 CMakeLists.txt
 
 在 `CMakeLists.txt` 中添加新平台目标：
 
@@ -219,7 +219,7 @@ cp include/sm8850/pptt.h include/sm8xxx/pptt.h
 add_platform_target("sm8xxx" "SM8XXX")
 ```
 
-#### Step 4: Compile and Verify
+#### 步骤 4：编译和验证
 
 ```bash
 cd build
@@ -255,15 +255,15 @@ python3 tools/parse_dt.py sm8xxx.dtb --info
 3. 检测 L2/L3 缓存层次结构
 4. 生成头文件到 `include/<platform>/pptt.h`
 
-## 🎯 L2 Cache Architecture Selection Guide
+## 🎯 L2 缓存架构选择指南
 
 通用构建器支持三种 L2 缓存架构，通过宏定义自动检测：
 
 ### 1. Per-Core L2（每核独立 L2）
 
-Each CPU core has independent L2 cache. Used in SM8150-SM8650.
+每个 CPU 核心有独立的 L2 缓存。适用于 SM8150-SM8650。
 
-**Configuration**: Define independent L2 parameters for each core
+**配置方式**：为每个 core 定义独立的 L2 参数
 
 ```c
 #define CORE0_L2_SIZE               SIZE_KB(128)
@@ -276,7 +276,7 @@ Each CPU core has independent L2 cache. Used in SM8150-SM8650.
 // ... 为所有 core 定义
 ```
 
-**Sharing Support**: If multiple cores share L2, use identical size and attributes:
+**共享支持**：如果多个 core 共享 L2，使用相同的大小和属性：
 
 ```c
 // CPU0 和 CPU1 共享 128KB L2
@@ -286,9 +286,9 @@ Each CPU core has independent L2 cache. Used in SM8150-SM8650.
 
 ### 2. Per-Cluster L2（每簇共享 L2）
 
-All cores in each cluster share one L2 cache. Used in SM8750, SM8850.
+每个 Cluster 的所有核心共享一个 L2 缓存。适用于 SM8750、SM8850。
 
-**Configuration**: Define L2 parameters for each cluster
+**配置方式**：为每个 cluster 定义 L2 参数
 
 ```c
 #define CLUSTER0_L2_SIZE            SIZE_MB(12)
@@ -303,9 +303,9 @@ All cores in each cluster share one L2 cache. Used in SM8750, SM8850.
 
 ### 3. Shared L2（全局共享 L2）
 
-All cores share a single L2 cache.
+所有核心共享单个 L2 缓存。
 
-**Configuration**: Define single L2 parameter set
+**配置方式**：定义单个 L2 参数
 
 ```c
 #define L2_SIZE                     SIZE_MB(12)
@@ -315,16 +315,16 @@ All cores share a single L2 cache.
 #define L2_ATTRIBUTES               CACHE_ATTR_UNIFIED_WB
 ```
 
-**Auto-detection Logic**:
+**自动检测逻辑**：
 
 ```c
-// Builder detects in the following priority:
+// 构建器按以下优先级检测：
 if (defined CORE0_L2_SIZE)         → Per-Core L2
 else if (defined CLUSTER0_L2_SIZE) → Per-Cluster L2
 else if (defined L2_SIZE)          → Shared L2
 ```
 
-## 🔧 Modifying Existing Platform Configuration
+## 🔧 修改现有平台配置
 
 ### 修改缓存大小
 
@@ -373,27 +373,27 @@ else if (defined L2_SIZE)          → Shared L2
 #define PPTT_OEM_REVISION           0x1234
 ```
 
-## 📤 Output Files
+## 📤 输出文件
 
 ### 二进制 AML 文件（`builtin/PPTT.aml`）
 
-Standard ACPI binary table format, can be:
-- - Integrated into UEFI firmware or ACPI table collections
-- - Loaded to system via bootloader
-- - Used for actual device ACPI table deployment
+标准的 ACPI 二进制表格式，可以：
+- 集成到 UEFI 固件或 ACPI 表集合中
+- 通过 bootloader 加载到系统
+- 用于实际设备的 ACPI 表部署
 
-**Location**: `build/<platform>/builtin/PPTT.aml`
+**位置**：`build/<platform>/builtin/PPTT.aml`
 
 ### DSL 源码文件（`src/PPTT.dsl`）
 
-If iasl tool is installed, the build process automatically disassembles AML to DSL source:
-- - Human-readable ACPI table description
-- - Convenient for verifying generated table structure
-- - Can serve as reference documentation
+如果系统中安装了 iasl 工具，构建过程会自动反编译 AML 文件为 DSL 源码：
+- 人类可读的 ACPI 表描述
+- 方便验证生成的表结构
+- 可作为参考文档
 
-**Location**: `build/<platform>/src/PPTT.dsl`
+**位置**：`build/<platform>/src/PPTT.dsl`
 
-**Dependency**: Requires ACPICA toolkit installation
+**依赖**：需要安装 ACPICA 工具包
 ```bash
 # Ubuntu/Debian
 sudo apt install acpica-tools
@@ -404,13 +404,13 @@ sudo pacman -S acpica
 # macOS
 brew install acpica
 
-# # Check installation
+# 检查是否安装
 iasl -v
 ```
 
-## 🧪 Testing and Validation
+## 🧪 测试和验证
 
-For complete testing guide, refer to **[TESTING.md](TESTING.md)**。
+完整的测试指南请参考 **[TESTING.md](TESTING.md)**。
 
 ### 快速测试
 
@@ -418,7 +418,7 @@ For complete testing guide, refer to **[TESTING.md](TESTING.md)**。
 # 在 build 目录中
 cd build
 
-# Run完整测试套件
+# 运行完整测试套件
 python3 ../test/run_all_tests.py
 
 # 验证拓扑结构
@@ -437,11 +437,11 @@ python3 ../test/aml_validator.py
 | `aml_validator.py` | 验证 AML 文件是否符合 ACPI 规范 | [TESTING.md#aml-验证工具](TESTING.md) |
 | `pptt_validate.py` | 对比配置与 DSL 输出一致性 | [TESTING.md](TESTING.md) |
 
-## 🔍 Debugging and Troubleshooting
+## 🔍 调试和故障排除
 
 ### 启用详细输出
 
-Generator automatically prints topology structure:
+生成器会自动打印拓扑结构：
 
 ```bash
 ./pptt_generator_sm8850
@@ -465,22 +465,22 @@ PPTT 表结构：
 
 ### 检查缓存配置
 
-Use `grep` to quickly verify DSL output:
+使用 `grep` 快速验证 DSL 输出：
 
 ```bash
-# # Check L2 sizes
+# 检查 L2 大小
 grep "Size :" build/sm8850/src/PPTT.dsl
 
-# # Check cluster count
+# 检查 Cluster 数量
 grep "Processor Hierarchy" build/sm8850/src/PPTT.dsl | wc -l
 
-# # Check cache associativity
+# 检查缓存关联度
 grep "Associativity :" build/sm8850/src/PPTT.dsl
 ```
 
 ### 常见问题
 
-#### Q: Compile error says `SIZE_KB` macro undefined?
+#### Q: 编译时提示 `SIZE_KB` 宏未定义？
 
 A: 确保在平台头文件顶部包含：
 
@@ -488,7 +488,7 @@ A: 确保在平台头文件顶部包含：
 #include <common.h>
 ```
 
-#### Q: How to support more than 4 clusters?
+#### Q: 如何支持 4 个以上的 Cluster？
 
 A: 修改 `src/pptt.c` 中的 `MAX_CLUSTERS` 定义：
 
@@ -496,25 +496,25 @@ A: 修改 `src/pptt.c` 中的 `MAX_CLUSTERS` 定义：
 #define MAX_CLUSTERS 8  // 改为 8
 ```
 
-And define `CLUSTER3_*`, `CLUSTER4_*` 等。
+并在平台头文件中定义 `CLUSTER3_*`, `CLUSTER4_*` 等。
 
-#### Q: Generated file size doesn't match expectations?
+#### Q: 生成的文件大小与预期不符？
 
 A: 检查：
-1. Are unnecessary cache levels defined
-2. Is core count correct
-3. Run `verify_topology.py` to view actual structure
+1. 是否定义了不必要的缓存层级
+2. 核心数量是否正确
+3. 运行 `verify_topology.py` 查看实际结构
 
-#### Q: DSL file not generated?
+#### Q: DSL 文件未生成？
 
-A: # Check installation了 `iasl`：
+A: 检查是否安装了 `iasl`：
 
 ```bash
 iasl -v
-# # If not installed, refer to "Output Files" section above
+# 如未安装，参考上文"输出文件"一节
 ```
 
-## 🚀 Advanced Usage
+## 🚀 进阶使用
 
 ### 批量构建所有平台
 
@@ -533,21 +533,21 @@ cmake --build . --parallel
 
 ### 集成到 EDK2/UEFI 固件
 
-Copy generated `PPTT.aml` file to EDK2 project:
+将生成的 `PPTT.aml` 文件复制到 EDK2 项目：
 
 ```bash
-# # Example: Integrate SM8850 PPTT into EDK2
+# 示例：集成 SM8850 PPTT 到 EDK2
 cp build/sm8850/builtin/PPTT.aml \
    edk2-platforms/Platform/Qualcomm/Sm8850Pkg/AcpiTables/
 
-# # Reference in .inf file
+# 在 .inf 文件中引用
 # [Sources]
 #   AcpiTables/PPTT.aml
 ```
 
 ### 自定义 OEM 信息
 
-Edit platform header file `include/<platform>/pptt.h`：
+编辑平台头文件 `include/<platform>/pptt.h`：
 
 ```c
 #define PPTT_OEM_ID                 "MYOEM "      // 6 字符
@@ -555,11 +555,11 @@ Edit platform header file `include/<platform>/pptt.h`：
 #define PPTT_OEM_REVISION           0x1234       // 自定义版本号
 ```
 
-After recompilation, OEM information will be updated in PPTT table header.
+重新编译后，OEM 信息会更新到 PPTT 表头。
 
-## 🤝 Contributing
+## 🤝 贡献指南
 
-Contributions are welcome! Please follow these steps:
+欢迎贡献！请遵循以下步骤：
 
 1. **Fork 本仓库**
 2. **创建特性分支** (`git checkout -b feature/AmazingFeature`)
@@ -577,27 +577,27 @@ Contributions are welcome! Please follow these steps:
 
 ### 代码规范
 
-- - Follow existing code style
-- - Add necessary comments
-- - Update relevant documentation
-- - Ensure all tests pass
+- 遵循现有代码风格
+- 添加必要的注释
+- 更新相关文档
+- 确保所有测试通过
 
-## 📄 License
+## 📄 许可证
 
-This project is licensed under GPL-3.0 - see LICENSE file for details.
+本项目采用 GPL-3.0 许可证 - 详见 LICENSE 文件。
 
-## 📞 Contact
+## 📞 联系方式
 
-- **Project Homepage**: [https://github.com/Project-Aloha/acpi-table-generator](https://github.com/Project-Aloha/acpi-table-generator)
-- **Issue Reports**: [GitHub Issues](https://github.com/Project-Aloha/acpi-table-generator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Project-Aloha/acpi-table-generator/discussions)
+- **项目主页**: [https://github.com/Project-Aloha/acpi-table-generator](https://github.com/Project-Aloha/acpi-table-generator)
+- **问题反馈**: [GitHub Issues](https://github.com/Project-Aloha/acpi-table-generator/issues)
+- **讨论交流**: [GitHub Discussions](https://github.com/Project-Aloha/acpi-table-generator/discussions)
 
-## 🙏 Acknowledgments
+## 🙏 致谢
 
 - [ACPICA](https://www.acpica.org/) - ACPI 组件架构
 - [EDK2](https://github.com/tianocore/edk2) - UEFI 开发套件
 - [Linux Kernel Device Tree](https://www.devicetree.org/) - 设备树规范
-- All contributors and supporters
+- 所有贡献者和支持者
 
 ## 📚 相关资源
 
@@ -608,4 +608,4 @@ This project is licensed under GPL-3.0 - see LICENSE file for details.
 
 ---
 
-**🌟 If this project helps you, please give it a Star!**
+**🌟 如果本项目对你有帮助，请给个 Star！**

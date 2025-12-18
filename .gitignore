@@ -1,0 +1,9 @@
+*.aml
+*.o
+*.dts
+*.dtb
+*.pyc
+
+build/
+.vscode/
+__pycache__/
