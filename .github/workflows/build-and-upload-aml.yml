@@ -18,7 +18,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build zip python3 python3-pip
+          sudo apt-get install -y build-essential cmake ninja-build zip python3 python3-pip jq
 
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -47,12 +47,12 @@ jobs:
             fi
           done
 
-          # Convert platforms array to JSON
-          PLATFORMS_JSON=$(python3 - <<'PY'
-import json,sys
-print(json.dumps(sys.argv[1:]))
-PY
-${platforms[@]:-})
+          # Convert platforms array to JSON using jq
+          if [ ${#platforms[@]} -gt 0 ]; then
+            PLATFORMS_JSON=$(printf '%s\n' "${platforms[@]}" | jq -R -s -c 'split("\n")[:-1]')
+          else
+            PLATFORMS_JSON='[]'
+          fi
 
           echo "Found platforms: $PLATFORMS_JSON"
           echo "platforms=$PLATFORMS_JSON" >> $GITHUB_OUTPUT
