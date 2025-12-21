@@ -1,9 +1,13 @@
 *.aml
+*.dsl
+*.bin
 *.o
 *.dts
 *.dtb
 *.pyc
 
+.cache/
 build/
 .vscode/
 __pycache__/
+CMakeFiles/

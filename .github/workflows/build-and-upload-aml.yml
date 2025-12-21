@@ -29,9 +29,8 @@ jobs:
         - name: Run test suite
           run: |
             set -euo pipefail
-            python3 -m pip install --upgrade pip
-            python3 -m pip install -r requirements.txt
-            python3 test/run_all_tests.py
+            cd build
+            make test
 
         - name: Collect AMLs into per-platform directories
           id: prepare
@@ -40,12 +39,12 @@ jobs:
             mkdir -p artifacts
             platforms=()
 
-            for dir in build/*/builtin; do
+            for dir in build/*/; do
               if [ -d "$dir" ]; then
                 shopt -s nullglob
                 aml_files=("$dir"/*.aml)
                 if [ ${#aml_files[@]} -gt 0 ]; then
-                  platform=$(basename "$(dirname "$dir")")
+                  platform=$(basename "$dir")
                   echo "Packaging $platform into directory..."
                   mkdir -p "artifacts/${platform}"
                   cp -f "$dir"/*.aml "artifacts/${platform}/" || true

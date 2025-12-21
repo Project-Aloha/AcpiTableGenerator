@@ -4,90 +4,61 @@
 
 ---
 
-**Universal ACPI Topology Builder** - Dynamically generate ACPI tables for arbitrary complex CPU topologies using C
+**Universal ACPI Table Generator** - Multi-purpose ACPI table generator supporting various ACPI table types for complex hardware topologies
 
 ## ✨ Features
 
-- **🔧 Universal Topology Builder** - Single codebase supports multiple cache architectures (Shared L2, Per-Cluster L2, Per-Core L2, Shared L3)
-- **🎯 Zero Hardcoding** - Fully driven by macro definitions, automatically detects topology features
+- **🔧 Multi-Table ACPI Generator** - Supports multiple ACPI table types (PPTT, MADT, and more planned)
+- **🎯 PPTT Topology Builder** - Universal CPU topology builder supporting multiple cache architectures
 - **🔄 Heterogeneous Support** - Supports mixed configurations of different core types (P-Core/M-Core/E-Core)
 - **📐 Flexible Hierarchy** - Supports arbitrary combinations of 2-4 clusters and 2-4 level cache hierarchies
 - **✅ Automated Validation** - Integrated iasl disassembly and Python validation tools
 - **🚀 CMake Build** - Multi-platform parallel compilation, automatically generates AML and DSL
-
-## 📖 Documentation
-
-- **[Testing Guide (TESTING.md)](TESTING.md)** - Complete testing tools and validation methods
-- **[Architecture Design (ARCHITECTURE.md)](ARCHITECTURE.md)** - Design details of universal topology builder
+- **📈 Extensible Architecture** - Modular design for easy addition of new ACPI table types
 
 ## 🏗️ Supported Platforms
 
 | Platform | SoC | Architecture | Cores | L2 Type | L3 | File Size |
 |----------|-----|--------------|-------|---------|----|----|
-| **SM8150** | Snapdragon 855 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 2MB | 1044 bytes |
-| **SM8250** | Snapdragon 865 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 1044 bytes |
-| **SM8350** | Snapdragon 888 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 1044 bytes |
-| **SM8450** | Snapdragon 8 Gen 1 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 6MB | 1044 bytes |
-| **SM8475** | Snapdragon 8+ Gen 1 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 8MB | 1044 bytes |
-| **SM8550** | Snapdragon 8 Gen 2 | 3 Clusters (3E+4M+1P) | 8 | Per-Core | 8MB | 1044 bytes |
-| **SM8650** | Snapdragon 8 Gen 3 | 4 Clusters (2E+3M+2M+1P) | 8 | Per-Core | 12MB | 1064 bytes |
-| **SM8750** | Snapdragon 8 Elite Gen 2 | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 832 bytes |
-| **SM8850** | Snapdragon 8 Elite | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 832 bytes |
+| **MTK_MT1234** | MediaTek MT1234 | 2 Clusters (4+4) | 8 | Per-Core | - | 434 bytes |
+| **SM8150** | Snapdragon 855 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 2MB | 486 bytes |
+| **SM8250** | Snapdragon 865 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 486 bytes |
+| **SM8350** | Snapdragon 888 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 486 bytes |
+| **SM8450** | Snapdragon 8 Gen 1 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 6MB | 558 bytes |
+| **SM8475** | Snapdragon 8+ Gen 1 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 8MB | 558 bytes |
+| **SM8550** | Snapdragon 8 Gen 2 | 3 Clusters (3E+4M+1P) | 8 | Per-Core | 8MB | 474 bytes |
+| **SM8650** | Snapdragon 8 Gen 3 | 4 Clusters (2E+3M+2M+1P) | 8 | Per-Core | 12MB | 494 bytes |
+| **SM8750** | Snapdragon 8 Elite Gen 2 | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 434 bytes |
+| **SM8850** | Snapdragon 8 Elite | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 434 bytes |
 
-### L2 Cache Architecture
+## 🚀 Quick Start
 
-- **Per-Core L2**: 每个 CPU 核心有独立的 L2 缓存（可通过相同大小/属性实现 2-way 共享）
-- **Per-Cluster L2**: 每个 Cluster 的所有核心共享一个 L2 缓存
-- **Shared L2**: 所有核心共享单个 L2 缓存
-
-## 🚀 Quick Start (5 Minutes)
-
-### Step 1: Clone and Build
+### Step 1: Clone
 
 ```bash
 git clone https://github.com/Project-Aloha/acpi-table-generator.git
 cd acpi-table-generator
+```
+
+### Step 2: Generate ACPI Tables (PPTT Currently Implemented)
+
+```bash
 mkdir build && cd build
 cmake ..
 make
+# View generated AML files
+ls -lh qcom_sm8850/PPTT.aml
+ls -lh qcom_sm8550/PPTT.aml
+ls -lh mtk_mt1234/PPTT.aml
 ```
 
-### Step 2: Generate PPTT Tables
-
+### Step 3: Run Tests
+Use cross-platform Python test scripts:
 ```bash
-# 生成 SM8850 的 PPTT
-./pptt_generator_sm8850
+# Complete test suite (recommended)
+make test
 
-# 生成 SM8550 的 PPTT
-./pptt_generator_sm8550
-
-# 查看生成的文件
-ls -lh sm8850/builtin/PPTT.aml
-ls -lh sm8550/builtin/PPTT.aml
-```
-
-### Step 3: View Decompiled Results
-
-```bash
-# 查看 SM8850 拓扑
-cat sm8850/src/PPTT.dsl | head -100
-
-# 查看 SM8550 拓扑
-cat sm8550/src/PPTT.dsl | head -100
-```
-
-### Step 4: Run Tests
-
-使用跨平台的 Python 测试脚本（详见 [TESTING.md](TESTING.md)）：
-
-```bash
-# 完整测试套件（推荐）
-python3 ../test/run_all_tests.py
-
-# 拓扑验证
-python3 ../test/verify_topology.py
-
-# AML 文件验证
+# Or standalone test like:
 python3 ../test/aml_validator.py
 ```
 
@@ -96,486 +67,92 @@ python3 ../test/aml_validator.py
 ```
 .
 ├── src/
-│   ├── pptt.c              # PPTT 生成器主程序（通用拓扑构建器）
-│   └── madt.c              # MADT 生成器（待实现）
+│   ├── acpi_extractor.c     # ACPI table extraction tool
+│   └── dummy/
+│       ├── pptt.c           # PPTT table generator (implemented)
+│       └── madt.c           # MADT table generator (placeholder - planned)
 ├── include/
-│   ├── common.h            # 通用 ACPI 结构定义和宏
+│   ├── common.h             # Common ACPI structure definitions and macros
 │   ├── common/
-│   │   └── pptt.h          # PPTT 通用结构定义
-│   ├── sm8150/pptt.h       # SM8150 平台配置
-│   ├── sm8250/pptt.h       # SM8250 平台配置
-│   ├── sm8350/pptt.h       # SM8350 平台配置
-│   ├── sm8450/pptt.h       # SM8450 平台配置
-│   ├── sm8475/pptt.h       # SM8475 平台配置
-│   ├── sm8550/pptt.h       # SM8550 平台配置
-│   ├── sm8650/pptt.h       # SM8650 平台配置
-│   ├── sm8750/pptt.h       # SM8750 平台配置
-│   └── sm8850/pptt.h       # SM8850 平台配置
-├── build/                  # CMake 构建目录
-│   ├── pptt_generator_*    # 各平台生成器可执行文件
-│   └── <platform>/
-│       ├── builtin/
-│       │   └── PPTT.aml    # 生成的二进制 AML 文件
-│       └── src/
-│           └── PPTT.dsl    # iasl 反编译的 DSL 源码
-├── test/                   # 测试工具（Python + Bash）
-│   ├── run_all_tests.py    # 完整测试套件
-│   ├── verify_topology.py  # 拓扑结构验证
-│   ├── aml_validator.py    # AML 文件验证
-│   └── pptt_validate.py    # PPTT 配置验证
-├── tools/
-│   └── parse_dt.py         # 设备树解析工具
-├── CMakeLists.txt          # CMake 配置文件
-├── Makefile                # 传统 Makefile（已废弃）
-├── README.md               # 本文件
-├── TESTING.md              # 测试指南
-└── requirements.txt        # Python 依赖
+│   │   ├── pptt.h           # PPTT common structure definitions
+│   │   └── madt.h           # MADT common structure definitions (planned)
+│   └── vendor/
+│       ├── mtk/
+│       │   └── mt1234/
+│       │       └── pptt.h   # Placeholder PPTT header for multi-vendor test
+│       └── qcom/
+│           └── sm8850/
+│               ├── pptt.h   # SM8850 PPTT configuration
+│               └── madt.h   # SM8850 MADT configuration
+├── build/                   # CMake build directory
+│   ├── acpi_extractor       # ACPI table extraction tool
+│   ├── lib*_*.a             # Static libraries for each device-table combination
+│   ├── qcom_sm8850_pptt     # Executable for SM8850 PPTT generation
+│   └── <device>/
+│       ├── PPTT.aml         # Generated PPTT binary AML file
+│       ├── PPTT.dsl         # PPTT iasl disassembled DSL source
+│       └── PPTT_iasl.log    # PPTT iasl execution log
+├── test/                    # Test tools (Python + Bash)
+│   ├── run_all_tests.py     # Complete test suite (PPTT-focused currently)
+│   ├── verify_topology.py   # PPTT topology structure validation
+│   ├── aml_validator.py     # AML file validation (supports multiple table types)
+│   ├── *_validate.py        # ACPI Table configuration validation
+│   └── verify_*.py          # Additional verification scripts
+├── CMakeLists.txt           # CMake configuration file
+├── README.md                # This file
+├── README.zh.md             # Chinese version
+└── requirements.txt         # Python dependencies
 ```
 
 ## 🛠️ Adding New Platform
 
-### 方法 1: 手动创建配置文件
+### Method 1: Manual Configuration Creation
 
 #### Step 1: Create Platform Configuration Header
 
-在 `include/` 下创建新目录并复制模板：
+Create new directory under `include/vendor/` and copy template:
 
 ```bash
-# 创建新平台目录
-mkdir include/sm8xxx
+# Create new vendor/platform directory
+mkdir -p include/vendor/qcom/sm8xxx
 
-# 复制参考配置
-cp include/sm8850/pptt.h include/sm8xxx/pptt.h
+# Copy reference configuration
+cp include/vendor/qcom/sm8850/pptt.h include/vendor/qcom/sm8xxx/pptt.h
 ```
 
 #### Step 2: Modify Platform Configuration
 
-编辑 `include/sm8xxx/pptt.h`，根据实际硬件修改：
+Edit `include/vendor/qcom/sm8xxx/pptt.h` according to actual hardware.
 
-```c
-#pragma once
+#### Step 3: Rebuild
 
-#include <common.h>
-
-// OEM 信息
-#define PPTT_OEM_ID                     "QCOM  "
-#define PPTT_OEM_TABLE_ID               "QCOMEDK2"
-#define PPTT_OEM_REVISION               0x8xxx
-
-// 基本拓扑
-#define NUM_CORES                       8
-#define NUM_CLUSTERS                    2
-#define CLUSTER0_CORES                  6  // E-Core
-#define CLUSTER1_CORES                  2  // P-Core
-
-// Cluster 0 L1 缓存配置
-#define CLUSTER0_L1D_SIZE               SIZE_KB(64)
-#define CLUSTER0_L1D_NUM_SETS           256
-#define CLUSTER0_L1D_ASSOCIATIVITY      4
-#define CLUSTER0_L1D_LINE_SIZE          64
-#define CLUSTER0_L1D_ATTRIBUTES         CACHE_ATTR_DATA_WB
-
-#define CLUSTER0_L1I_SIZE               SIZE_KB(64)
-#define CLUSTER0_L1I_NUM_SETS           256
-#define CLUSTER0_L1I_ASSOCIATIVITY      4
-#define CLUSTER0_L1I_LINE_SIZE          64
-#define CLUSTER0_L1I_ATTRIBUTES         CACHE_ATTR_INSTRUCTION
-
-// L2 缓存配置（选择其中一种）
-
-// 选项 A: Per-Cluster L2
-#define CLUSTER0_L2_SIZE                SIZE_MB(12)
-#define CLUSTER0_L2_NUM_SETS            12288
-#define CLUSTER0_L2_ASSOCIATIVITY       16
-#define CLUSTER0_L2_LINE_SIZE           64
-#define CLUSTER0_L2_ATTRIBUTES          CACHE_ATTR_UNIFIED_WB
-
-// 选项 B: Per-Core L2（为每个 core 定义）
-// #define CORE0_L2_SIZE                SIZE_KB(128)
-// #define CORE0_L2_NUM_SETS            128
-// ...
-
-// 选项 C: Shared L2（所有核心共享）
-// #define L2_SIZE                      SIZE_MB(12)
-// #define L2_NUM_SETS                  12288
-// ...
-
-// L3 缓存配置（可选）
-#define L3_SIZE                         SIZE_MB(8)
-#define L3_NUM_SETS                     4096
-#define L3_ASSOCIATIVITY                16
-#define L3_LINE_SIZE                    64
-#define L3_ATTRIBUTES                   CACHE_ATTR_UNIFIED_WB
-
-#define CACHE_LINE_SIZE                 64
-```
-
-#### Step 3: Update CMakeLists.txt
-
-在 `CMakeLists.txt` 中添加新平台目标：
-
-```cmake
-# 在文件末尾添加
-add_platform_target("sm8xxx" "SM8XXX")
-```
-
-#### Step 4: Compile and Verify
+CMake will automatically detect the new platform:
 
 ```bash
 cd build
 cmake ..
-make pptt_generator_sm8xxx
-
-# 查看生成结果
-./pptt_generator_sm8xxx
-cat sm8xxx/src/PPTT.dsl
+make qcom_sm8xxx_pptt
 ```
-
-### 方法 2: 从设备树自动生成（推荐）
-
-使用 `parse_dt.py` 工具自动从设备树提取拓扑信息：
-
-```bash
-# 安装依赖
-pip install -r requirements.txt
-
-# 从 DTB 文件生成头文件
-python3 tools/parse_dt.py <platform>.dtb -p <platform_name>
-
-# 示例：从 sm8xxx.dtb 生成配置
-python3 tools/parse_dt.py sm8xxx.dtb -p sm8xxx
-
-# 查看设备树信息（不生成文件）
-python3 tools/parse_dt.py sm8xxx.dtb --info
-```
-
-工具会自动：
-1. 解析 DTB 中的 CPU 拓扑（cpus 节点和 cpu-map）
-2. 提取 cluster 和 core 信息
-3. 检测 L2/L3 缓存层次结构
-4. 生成头文件到 `include/<platform>/pptt.h`
-
-## 🎯 L2 Cache Architecture Selection Guide
-
-通用构建器支持三种 L2 缓存架构，通过宏定义自动检测：
-
-### 1. Per-Core L2（每核独立 L2）
-
-Each CPU core has independent L2 cache. Used in SM8150-SM8650.
-
-**Configuration**: Define independent L2 parameters for each core
-
-```c
-#define CORE0_L2_SIZE               SIZE_KB(128)
-#define CORE0_L2_NUM_SETS           128
-#define CORE0_L2_ASSOCIATIVITY      8
-#define CORE0_L2_LINE_SIZE          64
-#define CORE0_L2_ATTRIBUTES         CACHE_ATTR_UNIFIED_WB
-
-#define CORE1_L2_SIZE               SIZE_KB(128)
-// ... 为所有 core 定义
-```
-
-**Sharing Support**: If multiple cores share L2, use identical size and attributes:
-
-```c
-// CPU0 和 CPU1 共享 128KB L2
-#define CORE0_L2_SIZE               SIZE_KB(128)
-#define CORE1_L2_SIZE               SIZE_KB(128)  // 相同大小表示共享
-```
-
-### 2. Per-Cluster L2（每簇共享 L2）
-
-All cores in each cluster share one L2 cache. Used in SM8750, SM8850.
-
-**Configuration**: Define L2 parameters for each cluster
-
-```c
-#define CLUSTER0_L2_SIZE            SIZE_MB(12)
-#define CLUSTER0_L2_NUM_SETS        12288
-#define CLUSTER0_L2_ASSOCIATIVITY   16
-#define CLUSTER0_L2_LINE_SIZE       64
-#define CLUSTER0_L2_ATTRIBUTES      CACHE_ATTR_UNIFIED_WB
-
-#define CLUSTER1_L2_SIZE            SIZE_MB(12)
-// ... 为所有 cluster 定义
-```
-
-### 3. Shared L2（全局共享 L2）
-
-All cores share a single L2 cache.
-
-**Configuration**: Define single L2 parameter set
-
-```c
-#define L2_SIZE                     SIZE_MB(12)
-#define L2_NUM_SETS                 12288
-#define L2_ASSOCIATIVITY            12
-#define L2_LINE_SIZE                64
-#define L2_ATTRIBUTES               CACHE_ATTR_UNIFIED_WB
-```
-
-**Auto-detection Logic**:
-
-```c
-// Builder detects in the following priority:
-if (defined CORE0_L2_SIZE)         → Per-Core L2
-else if (defined CLUSTER0_L2_SIZE) → Per-Cluster L2
-else if (defined L2_SIZE)          → Shared L2
-```
-
-## 🔧 Modifying Existing Platform Configuration
-
-### 修改缓存大小
-
-编辑 `include/<platform>/pptt.h`：
-
-```c
-// 修改 L1D 大小
-#define CLUSTER0_L1D_SIZE           SIZE_KB(128)  // 从 64KB 改为 128KB
-
-// 修改 L2 大小
-#define CLUSTER0_L2_SIZE            SIZE_MB(16)   // 从 12MB 改为 16MB
-
-// 修改关联度
-#define CLUSTER0_L2_ASSOCIATIVITY   20            // 从 16-way 改为 20-way
-```
-
-### 修改核心数量
-
-```c
-#define NUM_CORES                   12            // 总核心数
-#define NUM_CLUSTERS                3             // 簇数量
-#define CLUSTER0_CORES              6
-#define CLUSTER1_CORES              4
-#define CLUSTER2_CORES              2
-```
-
-### 添加/删除 L3 缓存
-
-```c
-// 添加 L3：定义 L3 参数
-#define L3_SIZE                     SIZE_MB(8)
-#define L3_NUM_SETS                 4096
-#define L3_ASSOCIATIVITY            16
-#define L3_LINE_SIZE                64
-#define L3_ATTRIBUTES               CACHE_ATTR_UNIFIED_WB
-
-// 删除 L3：注释掉所有 L3_* 定义
-// #define L3_SIZE                  ...
-```
-
-### 修改 OEM 信息
-
-```c
-#define PPTT_OEM_ID                 "MYOEM "
-#define PPTT_OEM_TABLE_ID           "MYTABLE0"
-#define PPTT_OEM_REVISION           0x1234
-```
-
-## 📤 Output Files
-
-### 二进制 AML 文件（`builtin/PPTT.aml`）
-
-Standard ACPI binary table format, can be:
-- - Integrated into UEFI firmware or ACPI table collections
-- - Loaded to system via bootloader
-- - Used for actual device ACPI table deployment
-
-**Location**: `build/<platform>/builtin/PPTT.aml`
-
-### DSL 源码文件（`src/PPTT.dsl`）
-
-If iasl tool is installed, the build process automatically disassembles AML to DSL source:
-- - Human-readable ACPI table description
-- - Convenient for verifying generated table structure
-- - Can serve as reference documentation
-
-**Location**: `build/<platform>/src/PPTT.dsl`
-
-**Dependency**: Requires ACPICA toolkit installation
-```bash
-# Ubuntu/Debian
-sudo apt install acpica-tools
-
-# Arch Linux
-sudo pacman -S acpica
-
-# macOS
-brew install acpica
-
-# # Check installation
-iasl -v
-```
-
-## 🧪 Testing and Validation
-
-For complete testing guide, refer to **[TESTING.md](TESTING.md)**。
-
-### 快速测试
-
-```bash
-# 在 build 目录中
-cd build
-
-# Run完整测试套件
-python3 ../test/run_all_tests.py
-
-# 验证拓扑结构
-python3 ../test/verify_topology.py
-
-# 验证 AML 文件格式
-python3 ../test/aml_validator.py
-```
-
-### 主要测试工具
-
-| 工具 | 功能 | 文档链接 |
-|------|------|---------|
-| `run_all_tests.py` | 完整测试套件：编译、生成、验证 | [TESTING.md#完整测试套件](TESTING.md) |
-| `verify_topology.py` | 验证和可视化 PPTT 拓扑结构 | [TESTING.md#拓扑验证工具](TESTING.md) |
-| `aml_validator.py` | 验证 AML 文件是否符合 ACPI 规范 | [TESTING.md#aml-验证工具](TESTING.md) |
-| `pptt_validate.py` | 对比配置与 DSL 输出一致性 | [TESTING.md](TESTING.md) |
-
-## 🔍 Debugging and Troubleshooting
-
-### 启用详细输出
-
-Generator automatically prints topology structure:
-
-```bash
-./pptt_generator_sm8850
-```
-
-输出示例：
-```
-PPTT 表结构：
-  总大小: 832 bytes
-  Package (Physical): 1
-  Clusters: 2
-    - Cluster 0: 6 cores
-      L1D: 64 KB, 4-way
-      L1I: 64 KB, 4-way
-      L2: 12288 KB, 16-way
-    - Cluster 1: 2 cores
-      L1D: 64 KB, 4-way
-      L1I: 64 KB, 4-way
-      L2: 12288 KB, 16-way
-```
-
-### 检查缓存配置
-
-Use `grep` to quickly verify DSL output:
-
-```bash
-# # Check L2 sizes
-grep "Size :" build/sm8850/src/PPTT.dsl
-
-# # Check cluster count
-grep "Processor Hierarchy" build/sm8850/src/PPTT.dsl | wc -l
-
-# # Check cache associativity
-grep "Associativity :" build/sm8850/src/PPTT.dsl
-```
-
-### 常见问题
-
-#### Q: Compile error says `SIZE_KB` macro undefined?
-
-A: 确保在平台头文件顶部包含：
-
-```c
-#include <common.h>
-```
-
-#### Q: How to support more than 4 clusters?
-
-A: 修改 `src/pptt.c` 中的 `MAX_CLUSTERS` 定义：
-
-```c
-#define MAX_CLUSTERS 8  // 改为 8
-```
-
-And define `CLUSTER3_*`, `CLUSTER4_*` 等。
-
-#### Q: Generated file size doesn't match expectations?
-
-A: 检查：
-1. Are unnecessary cache levels defined
-2. Is core count correct
-3. Run `verify_topology.py` to view actual structure
-
-#### Q: DSL file not generated?
-
-A: # Check installation了 `iasl`：
-
-```bash
-iasl -v
-# # If not installed, refer to "Output Files" section above
-```
-
-## 🚀 Advanced Usage
-
-### 批量构建所有平台
-
-```bash
-cd build
-
-# Linux/macOS
-cmake --build . --parallel $(nproc)
-
-# Windows (PowerShell)
-cmake --build . --parallel $env:NUMBER_OF_PROCESSORS
-
-# 跨平台（自动检测）
-cmake --build . --parallel
-```
-
-### 集成到 EDK2/UEFI 固件
-
-Copy generated `PPTT.aml` file to EDK2 project:
-
-```bash
-# # Example: Integrate SM8850 PPTT into EDK2
-cp build/sm8850/builtin/PPTT.aml \
-   edk2-platforms/Platform/Qualcomm/Sm8850Pkg/AcpiTables/
-
-# # Reference in .inf file
-# [Sources]
-#   AcpiTables/PPTT.aml
-```
-
-### 自定义 OEM 信息
-
-Edit platform header file `include/<platform>/pptt.h`：
-
-```c
-#define PPTT_OEM_ID                 "MYOEM "      // 6 字符
-#define PPTT_OEM_TABLE_ID           "MYTABLE0"   // 8 字符
-#define PPTT_OEM_REVISION           0x1234       // 自定义版本号
-```
-
-After recompilation, OEM information will be updated in PPTT table header.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
 
-1. **Fork 本仓库**
-2. **创建特性分支** (`git checkout -b feature/AmazingFeature`)
-3. **提交更改** (`git commit -m 'Add some AmazingFeature'`)
-4. **推送到分支** (`git push origin feature/AmazingFeature`)
-5. **创建 Pull Request**
+1. **Fork this repository**
+2. **Create a feature branch** (`git checkout -b feature/AmazingFeature`)
+3. **Commit your changes** (`git commit -m 'Add some AmazingFeature'`)
+4. **Push to the branch** (`git push origin feature/AmazingFeature`)
+5. **Create a Pull Request**
 
-### 贡献内容
+### Contribution Areas
 
-- ✅ 添加新平台支持
-- ✅ 改进通用构建器
-- ✅ 完善测试工具
-- ✅ 修复 Bug
-- ✅ 改进文档
+- ✅ Add support for new platforms
+- ✅ Improve universal builder
+- ✅ Enhance testing tools
+- ✅ Fix bugs
+- ✅ Improve documentation
 
-### 代码规范
+### Code Standards
 
 - - Follow existing code style
 - - Add necessary comments
@@ -594,17 +171,15 @@ This project is licensed under GPL-3.0 - see LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- [ACPICA](https://www.acpica.org/) - ACPI 组件架构
-- [EDK2](https://github.com/tianocore/edk2) - UEFI 开发套件
-- [Linux Kernel Device Tree](https://www.devicetree.org/) - 设备树规范
+- [ACPICA](https://www.acpica.org/) - ACPI Component Architecture
+- [EDK2](https://github.com/tianocore/edk2) - UEFI Development Kit
 - All contributors and supporters
 
-## 📚 相关资源
+## 📚 Related Resources
 
-- [ACPI Specification 6.5](https://uefi.org/specs/ACPI/6.5/) - ACPI 规范
-- [PPTT Table Specification](https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#processor-properties-topology-table-pptt) - PPTT 表规范
-- [ARM CPU Architecture](https://developer.arm.com/documentation/) - ARM 架构文档
-- [Qualcomm Snapdragon](https://www.qualcomm.com/snapdragon) - 高通骁龙处理器
+- [ACPI Specification 6.6](https://uefi.org/specs/ACPI/6.6/) - ACPI Specification
+- [ARM CPU Architecture](https://developer.arm.com/documentation/) - ARM Architecture Documentation
+- [Qualcomm Snapdragon](https://www.qualcomm.com/snapdragon) - Qualcomm Snapdragon Processors
 
 ---
 

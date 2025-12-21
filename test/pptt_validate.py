@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-PPTT 验证工具
-通过解析 iasl 生成的 DSL 文件和 C 头文件配置，验证 PPTT 表的正确性
+PPTT Validation Tool
+Validates PPTT table correctness by parsing iasl-generated DSL files and C header configurations
 """
 
 import re
@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 
 class HeaderParser:
-    """解析 C 头文件中的配置"""
+    """Parse configurations in C header files"""
     
     def __init__(self, header_path: Path):
         self.header_path = header_path
@@ -19,21 +19,21 @@ class HeaderParser:
         self._parse()
     
     def _parse(self):
-        """解析头文件"""
+        """Parse header file"""
         content = self.header_path.read_text()
         
-        # 匹配 #define 宏定义
+        # Match #define macros
         pattern = r'#define\s+(\w+)\s+(.+?)(?://.*)?$'
         for match in re.finditer(pattern, content, re.MULTILINE):
             name = match.group(1)
             value = match.group(2).strip()
             
-            # 计算表达式（简单支持）
+            # Evaluate expressions (simple support)
             try:
                 if isinstance(value, str):
                     if 'KB' in value or 'MB' in value:
                         value = value.replace('KB', '* 1024').replace('MB', '* 1024 * 1024')
-                        # 替换可能的括号和空格
+                        # Replace possible parentheses and spaces
                         value = value.replace('(', '').replace(')', '').strip()
                         value = eval(value)
                     elif value.startswith('0x'):
@@ -54,7 +54,7 @@ class HeaderParser:
 
 
 class DSLParser:
-    """解析 iasl 生成的 DSL 文件（表格格式）"""
+    """Parse iasl-generated DSL file (table format)"""
     
     def __init__(self, dsl_path: Path):
         self.dsl_path = dsl_path
@@ -64,31 +64,31 @@ class DSLParser:
         self._parse()
     
     def _parse(self):
-        """解析 DSL 表格格式内容"""
+        """Parse DSL table format content"""
         lines = self.content.split('\n')
         i = 0
         
         while i < len(lines):
             line = lines[i].strip()
             
-            # 只检测 Subtable Type 行
+            # Only detect Subtable Type lines
             if 'Subtable Type' in line:
-                # 检测 Processor Hierarchy Node
+                # Detect Processor Hierarchy Node
                 if 'Processor Hierarchy Node' in line:
                     proc = self._parse_processor(lines, i)
                     if proc:
                         self.processors.append(proc)
                 
-                # 检测 Cache Type
+                # Detect Cache Type
                 elif 'Cache Type' in line:
                     cache = self._parse_cache(lines, i)
-                    if cache and cache.get('size'):  # 只添加有效的 cache
+                    if cache and cache.get('size'):  # Only add valid cache
                         self.caches.append(cache)
             
             i += 1
     
     def _parse_processor(self, lines: List[str], start: int) -> Optional[Dict]:
-        """解析处理器节点"""
+        """Parse processor node"""
         proc = {}
         
         for i in range(start, min(start + 20, len(lines))):
@@ -120,7 +120,7 @@ class DSLParser:
         return proc if proc else None
     
     def _parse_cache(self, lines: List[str], start: int) -> Optional[Dict]:
-        """解析缓存节点"""
+        """Parse cache node"""
         cache = {}
         
         for i in range(start, min(start + 30, len(lines))):
@@ -141,7 +141,7 @@ class DSLParser:
                 if match:
                     cache['line_size'] = int(match.group(1), 16)
             
-            # 匹配 "                                  Cache Type : 2" 这种格式
+            # Match "                                  Cache Type : 2" format
             elif line.strip().startswith('Cache Type :'):
                 match = re.search(r':\s*(\d+)', line)
                 if match:
@@ -161,29 +161,26 @@ class DSLParser:
         return cache if cache else None
     
     def get_cache_by_type(self, cache_type: str) -> List[Dict]:
-        """获取指定类型的所有 cache"""
+        """Get all caches of specified type"""
         return [c for c in self.caches if c.get('type') == cache_type]
 
 
 class PPTTValidator:
-    """PPTT 验证器"""
+    """PPTT Validator"""
     
     def __init__(self, platform: str):
         self.platform = platform
         self.base_path = Path('/workspaces/acpi-table-generator')
         self.build_path = self.base_path / 'build' / platform
         
-        # 加载头文件配置
+        # Load header configuration
         self.header = HeaderParser(self.base_path / 'include' / platform / 'pptt.h')
         
-        # 加载 DSL 文件
-        dsl_path = self.build_path / 'src' / 'PPTT.dsl'
-        if not dsl_path.exists():
-            # 尝试 builtin 目录
-            dsl_path = self.build_path / 'builtin' / 'PPTT.dsl'
+        # Load DSL file
+        dsl_path = self.build_path / 'PPTT.dsl'
         
         if not dsl_path.exists():
-            raise FileNotFoundError(f"找不到 DSL 文件: {dsl_path}")
+            raise FileNotFoundError(f"Cannot find DSL file: {dsl_path}")
         
         self.dsl = DSLParser(dsl_path)
         
@@ -193,59 +190,59 @@ class PPTTValidator:
     def validate_cache_config(self, cache_name: str, cache_type: str, 
                              expected_size, expected_assoc, 
                              expected_line) -> bool:
-        """验证缓存配置"""
+        """Validate cache configuration"""
         caches = self.dsl.get_cache_by_type(cache_type)
         
         if not caches:
-            self.errors.append(f"未找到类型为 {cache_type} 的 Cache")
+            self.errors.append(f"No cache of type {cache_type} found")
             return False
         
-        # 对于 L1 缓存，应该有 NUM_CORES 个
+        # For L1 caches, there should be NUM_CORES units
         num_cores = self.header.get('NUM_CORES', 2)
         
         if cache_type in ['ReadOnly', 'ReadWrite']:  # L1
             if len(caches) != num_cores:
-                self.errors.append(f"{cache_name}: 期望 {num_cores} 个，实际找到 {len(caches)} 个")
+                self.errors.append(f"{cache_name}: Expected {num_cores}, found {len(caches)}")
                 return False
         
-        # 验证第一个 cache 的配置
+        # Validate first cache configuration
         cache = caches[0]
         valid = True
         
         if cache['size'] != expected_size:
-            self.errors.append(f"{cache_name}: Size 不匹配 (期望 {expected_size}, 实际 {cache['size']})")
+            self.errors.append(f"{cache_name}: Size mismatch (expected {expected_size}, actual {cache['size']})")
             valid = False
         
         if cache['associativity'] != expected_assoc:
-            self.errors.append(f"{cache_name}: Associativity 不匹配 (期望 {expected_assoc}, 实际 {cache['associativity']})")
+            self.errors.append(f"{cache_name}: Associativity mismatch (expected {expected_assoc}, actual {cache['associativity']})")
             valid = False
         
         if cache['line_size'] != expected_line:
-            self.errors.append(f"{cache_name}: Line Size 不匹配 (期望 {expected_line}, 实际 {cache['line_size']})")
+            self.errors.append(f"{cache_name}: Line Size mismatch (expected {expected_line}, actual {cache['line_size']})")
             valid = False
         
         return valid
     
     def validate(self) -> bool:
-        """执行验证"""
-        print(f"=== 验证 PPTT 表: {self.platform} ===\n")
+        """Execute validation"""
+        print(f"=== Validating PPTT Table: {self.platform} ===\n")
         
-        print(f"头文件配置:")
+        print(f"Header Configuration:")
         print(f"  NUM_CORES: {self.header.get('NUM_CORES')}")
         print(f"  L1D: {self.header.get('L1D_SIZE')} bytes, {self.header.get('L1D_ASSOCIATIVITY')}-way")
         print(f"  L1I: {self.header.get('L1I_SIZE')} bytes, {self.header.get('L1I_ASSOCIATIVITY')}-way")
         print(f"  L2: {self.header.get('L2_SIZE')} bytes, {self.header.get('L2_ASSOCIATIVITY')}-way")
         print()
         
-        print(f"DSL 解析结果:")
-        print(f"  处理器节点: {len(self.dsl.processors)}")
-        print(f"  缓存节点: {len(self.dsl.caches)}")
+        print(f"DSL Parse Results:")
+        print(f"  Processor Nodes: {len(self.dsl.processors)}")
+        print(f"  Cache Nodes: {len(self.dsl.caches)}")
         print()
         
-        # 验证缓存配置
+        # Validate cache configuration
         valid = True
         
-        # 计算期望值
+        # Calculate expected values
         def calc_value(v):
             if isinstance(v, str):
                 v = v.replace('KB', '* 1024').replace('MB', '* 1024 * 1024')
@@ -256,7 +253,7 @@ class PPTTValidator:
                     return v
             return v
         
-        print("验证 L1 Data Cache...")
+        print("Validating L1 Data Cache...")
         valid &= self.validate_cache_config(
             "L1D", "ReadWrite",
             calc_value(self.header.get('L1D_SIZE')),
@@ -264,7 +261,7 @@ class PPTTValidator:
             calc_value(self.header.get('CACHE_LINE_SIZE', 64))
         )
         
-        print("验证 L1 Instruction Cache...")
+        print("Validating L1 Instruction Cache...")
         valid &= self.validate_cache_config(
             "L1I", "ReadOnly",
             calc_value(self.header.get('L1I_SIZE')),
@@ -272,7 +269,7 @@ class PPTTValidator:
             calc_value(self.header.get('CACHE_LINE_SIZE', 64))
         )
         
-        print("验证 L2 Cache...")
+        print("Validating L2 Cache...")
         valid &= self.validate_cache_config(
             "L2", "Unified",
             calc_value(self.header.get('L2_SIZE')),
@@ -280,39 +277,39 @@ class PPTTValidator:
             calc_value(self.header.get('CACHE_LINE_SIZE', 64))
         )
         
-        # 验证处理器数量
+        # Validate processor count
         num_cores = self.header.get('NUM_CORES', 2)
-        # 应该有 1 个 Package + NUM_CORES 个 Core
+        # Should have 1 Package + NUM_CORES Cores
         expected_procs = 1 + num_cores
         if len(self.dsl.processors) != expected_procs:
-            self.errors.append(f"处理器节点数量不匹配 (期望 {expected_procs}, 实际 {len(self.dsl.processors)})")
+            self.errors.append(f"Processor node count mismatch (expected {expected_procs}, actual {len(self.dsl.processors)})")
             valid = False
         
         print()
         
-        # 打印结果
+        # Print results
         if self.errors:
-            print(f"❌ 发现 {len(self.errors)} 个错误:")
+            print(f"❌ Found {len(self.errors)} error(s):")
             for err in self.errors:
                 print(f"  - {err}")
         
         if self.warnings:
-            print(f"⚠️  发现 {len(self.warnings)} 个警告:")
+            print(f"⚠️  Found {len(self.warnings)} warning(s):")
             for warn in self.warnings:
                 print(f"  - {warn}")
         
         if valid and not self.errors:
-            print("✅ 验证通过！DSL 配置与头文件一致。")
+            print("✅ Validation passed! DSL configuration matches header file.")
         else:
-            print("❌ 验证失败！")
+            print("❌ Validation failed!")
         
         return valid
 
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python pptt_validate.py <platform>")
-        print("  例如: python pptt_validate.py sm8550")
+        print("Usage: python pptt_validate.py <platform>")
+        print("  Example: python pptt_validate.py qcom_sm8550")
         sys.exit(1)
     
     platform = sys.argv[1]
@@ -322,7 +319,7 @@ def main():
         success = validator.validate()
         sys.exit(0 if success else 1)
     except Exception as e:
-        print(f"错误: {e}")
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

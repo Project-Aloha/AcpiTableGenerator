@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-PPTT AML 文件验证工具
-验证生成的 PPTT.aml 文件是否符合 ACPI 规范
+PPTT AML File Validation Tool
+Validates that generated PPTT.aml files comply with ACPI specification
 """
 
 import sys
@@ -10,12 +10,12 @@ from pathlib import Path
 
 
 class ACPITableHeader:
-    """ACPI 表头结构"""
+    """ACPI Table Header Structure"""
     SIZE = 36
     
     def __init__(self, data):
         if len(data) < self.SIZE:
-            raise ValueError(f"数据太短，至少需要 {self.SIZE} 字节")
+            raise ValueError(f"Data too short, at least {self.SIZE} bytes required")
         
         self.signature = data[0:4].decode('ascii', errors='ignore')
         self.length = struct.unpack('<I', data[4:8])[0]
@@ -28,7 +28,7 @@ class ACPITableHeader:
         self.creator_revision = struct.unpack('<I', data[32:36])[0]
     
     def __str__(self):
-        return f"""ACPI 表头:
+        return f"""ACPI Table Header:
   Signature: {self.signature}
   Length: {self.length} bytes
   Revision: {self.revision}
@@ -41,13 +41,13 @@ class ACPITableHeader:
 
 
 def calculate_checksum(data):
-    """计算 ACPI 表校验和"""
+    """Calculate ACPI table checksum"""
     total = sum(data)
     return (0x100 - (total & 0xFF)) & 0xFF
 
 
 def validate_pptt_structure(data, header):
-    """验证 PPTT 结构"""
+    """Validate PPTT structure"""
     errors = []
     warnings = []
     
@@ -56,29 +56,29 @@ def validate_pptt_structure(data, header):
     
     while offset < len(data):
         if offset + 2 > len(data):
-            errors.append(f"偏移 0x{offset:04x}: 数据意外结束")
+            errors.append(f"Offset 0x{offset:04x}: Unexpected end of data")
             break
         
         node_type = data[offset]
         node_length = data[offset + 1]
         
         if node_length < 2:
-            errors.append(f"偏移 0x{offset:04x}: 无效的节点长度 {node_length}")
+            errors.append(f"Offset 0x{offset:04x}: Invalid node length {node_length}")
             break
         
         if offset + node_length > len(data):
-            errors.append(f"偏移 0x{offset:04x}: 节点超出表边界")
+            errors.append(f"Offset 0x{offset:04x}: Node exceeds table boundary")
             break
         
-        # 验证节点类型
+        # Validate node type
         if node_type == 0:  # Processor Hierarchy Node
-            if node_length < 20:  # 最小长度
-                errors.append(f"偏移 0x{offset:04x}: Processor 节点太短")
+            if node_length < 20:  # Minimum length
+                errors.append(f"Offset 0x{offset:04x}: Processor node too short")
         elif node_type == 1:  # Cache Type Structure
-            if node_length != 28:  # 固定长度
-                warnings.append(f"偏移 0x{offset:04x}: Cache 节点长度异常 ({node_length} != 28)")
+            if node_length != 28:  # Fixed length
+                warnings.append(f"Offset 0x{offset:04x}: Cache node length abnormal ({node_length} != 28)")
         else:
-            warnings.append(f"偏移 0x{offset:04x}: 未知节点类型 {node_type}")
+            warnings.append(f"Offset 0x{offset:04x}: Unknown node type {node_type}")
         
         node_count += 1
         offset += node_length
@@ -86,107 +86,137 @@ def validate_pptt_structure(data, header):
     return errors, warnings, node_count
 
 
-def validate_pptt_file(file_path):
-    """验证 PPTT AML 文件"""
-    print(f"验证文件: {file_path}\n")
+def validate_aml_file(file_path):
+    """Validate AML file"""
+    print(f"Validating file: {file_path}\n")
     
-    # 读取文件
+    # Read file
     try:
         with open(file_path, 'rb') as f:
             data = f.read()
     except Exception as e:
-        print(f"❌ 无法读取文件: {e}")
+        print(f"❌ Cannot read file: {e}")
         return False
     
     if len(data) < ACPITableHeader.SIZE:
-        print(f"❌ 文件太短 ({len(data)} bytes < {ACPITableHeader.SIZE} bytes)")
+        print(f"❌ File too short ({len(data)} bytes < {ACPITableHeader.SIZE} bytes)")
         return False
     
-    # 解析表头
+    # Parse header
     try:
         header = ACPITableHeader(data)
         print(header)
         print()
     except Exception as e:
-        print(f"❌ 无法解析表头: {e}")
+        print(f"❌ Cannot parse header: {e}")
         return False
     
-    # 验证签名
-    if header.signature != "PPTT":
-        print(f"❌ 错误的表签名: {header.signature} (期望 PPTT)")
-        return False
-    print("✅ 表签名正确: PPTT")
+    # Get expected signature from filename
+    expected_signature = Path(file_path).stem.upper()
     
-    # 验证长度
+    # Validate signature matches filename
+    if header.signature != expected_signature:
+        print(f"❌ CRITICAL: Signature MISMATCH!")
+        print(f"   File contains '{header.signature}' but filename suggests '{expected_signature}'")
+        print(f"   This indicates the wrong table was extracted!")
+        return False
+    print(f"✅ Table signature matches filename: {header.signature}")
+    
+    # Validate length
     if header.length != len(data):
-        print(f"❌ 表长度不匹配: 头部声明 {header.length} bytes, 实际 {len(data)} bytes")
+        print(f"❌ Table length mismatch: header declares {header.length} bytes, actual {len(data)} bytes")
         return False
-    print(f"✅ 表长度匹配: {header.length} bytes")
+    print(f"✅ Table length matches: {header.length} bytes")
     
-    # 验证校验和
+    # Validate checksum
     calculated_checksum = calculate_checksum(data)
     if calculated_checksum != 0:
-        print(f"❌ 校验和错误: 计算结果 0x{calculated_checksum:02x} (应为 0)")
+        print(f"❌ Checksum error: calculated 0x{calculated_checksum:02x} (should be 0)")
         return False
-    print(f"✅ 校验和正确: 0x{header.checksum:02x}")
+    print(f"✅ Checksum correct: 0x{header.checksum:02x}")
     
-    # 验证结构
-    errors, warnings, node_count = validate_pptt_structure(data, header)
-    
-    print(f"✅ 找到 {node_count} 个 PPTT 节点")
+    # Validate structure (PPTT-specific validation)
+    if header.signature == 'PPTT':
+        errors, warnings, node_count = validate_pptt_structure(data, header)
+        print(f"✅ Found {node_count} PPTT node(s)")
+    else:
+        # For non-PPTT tables, skip structure validation
+        errors, warnings, node_count = [], [], 0
+        print(f"ℹ️  Structure validation skipped for {header.signature} table")
     
     if warnings:
-        print(f"\n⚠️  {len(warnings)} 个警告:")
-        for warning in warnings[:5]:  # 只显示前 5 个
+        print(f"\n⚠️  {len(warnings)} warning(s):")
+        for warning in warnings[:5]:  # Only show first 5
             print(f"   • {warning}")
         if len(warnings) > 5:
-            print(f"   ... 还有 {len(warnings) - 5} 个警告")
+            print(f"   ... and {len(warnings) - 5} more warning(s)")
     
     if errors:
-        print(f"\n❌ {len(errors)} 个错误:")
+        print(f"\n❌ {len(errors)} error(s):")
         for error in errors[:5]:
             print(f"   • {error}")
         if len(errors) > 5:
-            print(f"   ... 还有 {len(errors) - 5} 个错误")
+            print(f"   ... and {len(errors) - 5} more error(s)")
         return False
     
-    print("\n✅ PPTT 文件验证通过！")
+    print(f"\n✅ {header.signature} file validation passed!")
     return True
 
 
 def main():
-    """主函数"""
+    """Main function"""
     if len(sys.argv) < 2:
-        # 如果没有参数，尝试验证默认位置
+        # If no arguments, try to validate default location
         script_dir = Path(__file__).parent
         root_dir = script_dir.parent
+        
+        # Check if build_dir was passed as argument
         build_dir = root_dir / "build"
         
-        pptt_files = list(build_dir.glob("*/builtin/PPTT.aml"))
+        pptt_files = list(build_dir.glob("*/*.aml"))
         
         if not pptt_files:
-            print("用法: python aml_validator.py <PPTT.aml 文件路径>")
-            print("\n或者在构建目录中自动查找 PPTT.aml 文件")
+            print("Usage: python aml_validator.py <AML file path>")
+            print("\nOr automatically find AML files in build directory")
             return 1
         
-        # 验证所有找到的文件
+        # Validate all found files
         all_passed = True
-        for pptt_file in pptt_files:
-            platform = pptt_file.parent.parent.name
+        for pptt_file in sorted(pptt_files):
+            platform = pptt_file.parent.name
             print(f"\n{'=' * 60}")
-            print(f"平台: {platform}")
+            print(f"Platform: {platform} - {pptt_file.name}")
             print('=' * 60)
-            if not validate_pptt_file(pptt_file):
+            if not validate_aml_file(pptt_file):
                 all_passed = False
         
         return 0 if all_passed else 1
     else:
         file_path = Path(sys.argv[1])
-        if not file_path.exists():
-            print(f"❌ 文件不存在: {file_path}")
-            return 1
         
-        return 0 if validate_pptt_file(file_path) else 1
+        # If it's a directory, validate all AML files in it
+        if file_path.is_dir():
+            pptt_files = list(file_path.glob("*/*.aml"))
+            if not pptt_files:
+                print(f"❌ No AML files found in: {file_path}")
+                return 1
+            
+            all_passed = True
+            for pptt_file in sorted(pptt_files):
+                platform = pptt_file.parent.name
+                print(f"\n{'=' * 60}")
+                print(f"Platform: {platform} - {pptt_file.name}")
+                print('=' * 60)
+                if not validate_aml_file(pptt_file):
+                    all_passed = False
+            
+            return 0 if all_passed else 1
+        else:
+            if not file_path.exists():
+                print(f"❌ File does not exist: {file_path}")
+                return 1
+            
+            return 0 if validate_aml_file(file_path) else 1
 
 
 if __name__ == "__main__":

@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-PPTT 通用拓扑构建器 - 完整测试套件
-跨平台测试脚本（支持 Windows/Linux/macOS）
+ACPI Table Generator - Complete Test Suite
+Cross-platform test script (supports Windows/Linux/macOS)
 """
 
 import os
 import sys
 import subprocess
 import struct
+import re
 from pathlib import Path
 
 
 class Colors:
-    """终端颜色（如果不支持则禁用）"""
+    """Terminal colors (disabled if not supported)"""
     HEADER = '\033[95m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
@@ -32,13 +33,13 @@ class Colors:
         cls.BOLD = ''
 
 
-# 检测是否支持颜色
+# Detect if colors are supported
 if os.name == 'nt' or not sys.stdout.isatty():
     Colors.disable()
 
 
 def print_header(text):
-    """打印标题"""
+    """Print header"""
     width = 67
     print(f"\n{'╔' + '═' * width + '╗'}")
     print(f"║ {text.center(width - 2)} ║")
@@ -46,28 +47,28 @@ def print_header(text):
 
 
 def print_section(title):
-    """打印章节标题"""
+    """Print section title"""
     print(f"\n{Colors.BLUE}{title}{Colors.ENDC}")
     print("━" * 67)
 
 
 def print_success(message):
-    """打印成功信息"""
+    """Print success message"""
     print(f"{Colors.GREEN}   ✅ {message}{Colors.ENDC}")
 
 
 def print_error(message):
-    """打印错误信息"""
+    """Print error message"""
     print(f"{Colors.RED}   ❌ {message}{Colors.ENDC}")
 
 
 def print_info(message):
-    """打印信息"""
+    """Print info message"""
     print(f"   {message}")
 
 
 def run_command(cmd, cwd=None, capture=True):
-    """运行命令并返回结果"""
+    """Run command and return result"""
     try:
         if capture:
             result = subprocess.run(
@@ -85,373 +86,262 @@ def run_command(cmd, cwd=None, capture=True):
         return -1, "", str(e)
 
 
-def test_compilation(build_dir, platforms):
-    """测试 1: 编译所有平台"""
-    print_section("📦 测试 1: 编译所有平台")
+def discover_device_targets(build_dir):
+    """Discover all device targets from build directory"""
+    targets = []
+    for item in build_dir.iterdir():
+        if item.is_dir() and not item.name.startswith('.') and item.name != 'CMakeFiles':
+            # Check if directory contains generated AML files
+            aml_files = list(item.glob('*.aml'))
+            if aml_files:
+                targets.append(item.name)
+    return sorted(targets)
+
+
+def test_aml_generation(build_dir, targets):
+    """Test 1: Verify AML file generation"""
+    print_section("📦 Test 1: Verify AML File Generation")
     
     all_passed = True
-    for platform in platforms:
-        print(f"🔨 编译 {platform}...")
+    for target in targets:
+        target_dir = build_dir / target
+        aml_files = list(target_dir.glob('*.aml'))
         
-        # 使用 cmake --build 而不是 make（跨平台）
-        returncode, stdout, stderr = run_command(
-            ["cmake", "--build", ".", "--target", f"pptt_generator_{platform}"],
-            cwd=build_dir,
-            capture=True
-        )
-        
-        if returncode == 0:
-            print_success(f"{platform} 编译成功")
+        if aml_files:
+            for aml_file in aml_files:
+                size = aml_file.stat().st_size
+                print_success(f"{target}/{aml_file.name} ({size} bytes)")
         else:
-            print_error(f"{platform} 编译失败")
-            if stderr:
-                print(f"      错误: {stderr[:200]}")
+            print_error(f"{target}: No AML files found")
             all_passed = False
     
     return all_passed
 
 
-def test_file_generation(build_dir, platforms):
-    """测试 2: 验证文件生成"""
-    print_section("📄 测试 2: 验证文件生成")
+def test_dsl_decompilation(build_dir, targets):
+    """Test 2: Verify DSL decompilation"""
+    print_section("📄 Test 2: Verify DSL Decompilation")
     
     all_passed = True
-    for platform in platforms:
-        aml_file = build_dir / platform / "builtin" / "PPTT.aml"
-        dsl_file = build_dir / platform / "src" / "PPTT.dsl"
+    for target in targets:
+        target_dir = build_dir / target
+        dsl_files = list(target_dir.glob('*.dsl'))
         
-        if aml_file.exists():
-            size = aml_file.stat().st_size
-            print_success(f"{platform}: PPTT.aml ({size} bytes)")
+        if dsl_files:
+            for dsl_file in dsl_files:
+                with open(dsl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = len(f.readlines())
+                print_success(f"{target}/{dsl_file.name} ({lines} lines)")
         else:
-            print_error(f"{platform}: PPTT.aml 缺失")
-            all_passed = False
+            print_info(f"⚠️  {target}: No DSL files (iasl may not be installed)")
+    
+    return all_passed
+
+
+def test_dsl_no_errors(build_dir, targets):
+    """Test 3: Verify DSL files have no errors"""
+    print_section("🔍 Test 3: Verify DSL Files Have No Errors")
+    
+    all_passed = True
+    for target in targets:
+        target_dir = build_dir / target
+        dsl_files = list(target_dir.glob('*.dsl'))
+        
+        for dsl_file in dsl_files:
+            with open(dsl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            
+            # Check for error patterns but exclude "Error checking" and similar benign patterns
+            error_lines = []
+            for line in content.split('\n'):
+                if re.search(r'\berror\b', line, re.IGNORECASE):
+                    # Exclude known benign patterns
+                    if 'Error checking' not in line:
+                        error_lines.append(line.strip())
+            
+            if error_lines:
+                print_error(f"{target}/{dsl_file.name}: Contains error keyword")
+                for line in error_lines[:3]:  # Show first 3 errors
+                    print_info(f"  {line}")
+                all_passed = False
+            else:
+                print_success(f"{target}/{dsl_file.name}: No errors found")
+    
+    return all_passed
+
+
+def test_node_references(build_dir, targets):
+    """Test 4: Node reference verification"""
+    print_section("🔗 Test 4: Node Reference Verification")
+    
+    all_passed = True
+    test_script = Path(__file__).parent / "verify_node_references.py"
+    
+    if not test_script.exists():
+        print_info("⚠️  Verification script not found: verify_node_references.py (skip)")
+        return True
+    
+    for target in targets:
+        target_dir = build_dir / target
+        dsl_files = list(target_dir.glob('*.dsl'))
+        
+        if not dsl_files:
+            print_info(f"⚠️  {target}: No DSL files (skip)")
             continue
         
-        if dsl_file.exists():
-            with open(dsl_file, 'r', encoding='utf-8', errors='ignore') as f:
-                lines = len(f.readlines())
-            print_info(f"✅ PPTT.dsl ({lines} lines)")
-        else:
-            print_info("⚠️  PPTT.dsl 缺失（iasl 未安装）")
+        for dsl_file in dsl_files:
+            print(f"🔍 Verifying {target}/{dsl_file.name}...")
+            returncode, stdout, stderr = run_command(
+                [sys.executable, str(test_script), str(dsl_file)],
+                capture=True
+            )
+            
+            if returncode == 0:
+                # Extract statistics
+                match = re.search(r'Found (\d+) nodes', stdout)
+                if match:
+                    node_count = match.group(1)
+                    print_success(f"{target}/{dsl_file.name}: All {node_count} node references correct")
+                else:
+                    print_success(f"{target}/{dsl_file.name}: Node reference verification passed")
+            else:
+                print_error(f"{target}/{dsl_file.name}: Found node reference errors")
+                all_passed = False
     
+    print()
     return all_passed
 
 
-def test_topology_verification(build_dir, platforms):
-    """测试 3: 运行生成器并验证拓扑"""
-    print_section("🚀 测试 3: 运行生成器并验证拓扑")
+def test_checksum(build_dir, targets):
+    """Test 5: Checksum verification"""
+    print_section("🔐 Test 5: Checksum Verification")
     
     all_passed = True
-    
-    # SM8850 验证
-    if "sm8850" in platforms:
-        print("📱 SM8850 (Snapdragon 8 Gen 3):")
-        exe = build_dir / "pptt_generator_sm8850"
-        if os.name == 'nt':
-            exe = exe.with_suffix('.exe')
+    for target in targets:
+        target_dir = build_dir / target
+        aml_files = list(target_dir.glob('*.aml'))
         
-        returncode, stdout, stderr = run_command([str(exe)], cwd=build_dir)
-        
-        if returncode == 0:
-            # 验证输出关键信息
-            checks = [
-                ("Total size: 832 bytes", "文件大小"),
-                ("Clusters: 2", "Cluster 数量"),
-                ("L2: 12288 KB", "L2缓存")
-            ]
-            
-            passed = True
-            for check_str, desc in checks:
-                if check_str in stdout:
-                    pass
-                else:
-                    passed = False
-                    print_error(f"验证失败: 缺少 '{desc}'")
-            
-            if passed:
-                print_success("拓扑结构正确")
-                print_info("• 2 Clusters (6 cores + 2 cores)")
-                print_info("• Per-cluster L2: 12MB")
-            else:
-                all_passed = False
-        else:
-            print_error("生成器运行失败")
-            all_passed = False
-        print()
-    
-    # SM8550 验证
-    if "sm8550" in platforms:
-        print("📱 SM8550 (Snapdragon 8 Gen 2):")
-        exe = build_dir / "pptt_generator_sm8550"
-        if os.name == 'nt':
-            exe = exe.with_suffix('.exe')
-        
-        returncode, stdout, stderr = run_command([str(exe)], cwd=build_dir)
-        
-        if returncode == 0:
-            checks = [
-                ("Total size: 1044 bytes", "文件大小"),
-                ("Clusters: 3", "Cluster 数量"),
-                ("L3 Cache (Shared): 8192 KB", "共享 L3")
-            ]
-            
-            passed = True
-            for check_str, desc in checks:
-                if check_str in stdout:
-                    pass
-                else:
-                    passed = False
-                    print_error(f"验证失败: 缺少 '{desc}'")
-            
-            if passed:
-                print_success("拓扑结构正确")
-                print_info("• 3 Clusters (3 + 4 + 1 cores)")
-                print_info("• 共享 L3: 8MB")
-            else:
-                all_passed = False
-        else:
-            print_error("生成器运行失败")
-            all_passed = False
-        print()
-    
-    # SM7325 验证
-    if "sm7325" in platforms:
-        print("📱 SM7325 (Snapdragon 778G):")
-        exe = build_dir / "pptt_generator_sm7325"
-        if os.name == 'nt':
-            exe = exe.with_suffix('.exe')
-        
-        returncode, stdout, stderr = run_command([str(exe)], cwd=build_dir)
-        
-        if returncode == 0:
-            checks = [
-                ("Total size: 1044 bytes", "文件大小"),
-                ("Clusters: 3", "Cluster 数量"),
-                ("L2 Cache (Per-core)", "Per-core L2"),
-                ("L3 Cache (Shared): 0 KB", "共享 L3")
-            ]
-            
-            passed = True
-            for check_str, desc in checks:
-                if check_str in stdout:
-                    pass
-                else:
-                    passed = False
-                    print_error(f"验证失败: 缺少 '{desc}'")
-            
-            if passed:
-                print_success("拓扑结构正确")
-                print_info("• 3 Clusters (4 + 3 + 1 cores)")
-                print_info("• Per-core L2 (8 private L2 caches)")
-                print_info("• Has L3 cache")
-            else:
-                all_passed = False
-        else:
-            print_error("生成器运行失败")
-            all_passed = False
-        print()
-    
-    # SM8845 验证
-    if "sm8845" in platforms:
-        print("📱 SM8845:")
-        exe = build_dir / "pptt_generator_sm8845"
-        if os.name == 'nt':
-            exe = exe.with_suffix('.exe')
-        
-        returncode, stdout, stderr = run_command([str(exe)], cwd=build_dir)
-        
-        if returncode == 0:
-            checks = [
-                ("Total size: 832 bytes", "文件大小"),
-                ("Clusters: 2", "Cluster 数量"),
-                ("L2: 0 KB", "L2缓存")
-            ]
-            
-            passed = True
-            for check_str, desc in checks:
-                if check_str in stdout:
-                    pass
-                else:
-                    passed = False
-                    print_error(f"验证失败: 缺少 '{desc}'")
-            
-            if passed:
-                print_success("拓扑结构正确")
-                print_info("• 2 Clusters (6 cores + 2 cores)")
-                print_info("• Per-cluster shared L2")
-            else:
-                all_passed = False
-        else:
-            print_error("生成器运行失败")
-            all_passed = False
-        print()
-    
-    return all_passed
-
-
-def test_dsl_validation(build_dir, platforms):
-    """测试 4: 验证 DSL 关键字段"""
-    print_section("🔍 测试 4: 验证 DSL 关键字段")
-    
-    all_passed = True
-    
-    # SM8850 DSL 验证
-    if "sm8850" in platforms:
-        dsl_file = build_dir / "sm8850" / "src" / "PPTT.dsl"
-        if dsl_file.exists():
-            with open(dsl_file, 'r', encoding='utf-8', errors='ignore') as f:
-                content = f.read()
-            
-            checks = [
-                ("Physical package : 1", "Physical Package"),
-                ("Size : 00C00000", "L2 = 0x00C00000 (12MB)")
-            ]
-            
-            passed = True
-            found_items = []
-            for check_str, desc in checks:
-                if check_str in content:
-                    found_items.append(desc)
-                else:
-                    passed = False
-                    print_error(f"SM8850 DSL 缺少: {desc}")
-            
-            if passed:
-                print_success("SM8850 DSL 验证通过")
-                for item in found_items:
-                    print_info(f"• 找到 {item}")
-            else:
-                all_passed = False
-        else:
-            print_info("⚠️  SM8850 DSL 文件不存在（跳过验证）")
-    
-    # SM8550 DSL 验证
-    if "sm8550" in platforms:
-        dsl_file = build_dir / "sm8550" / "src" / "PPTT.dsl"
-        if dsl_file.exists():
-            with open(dsl_file, 'r', encoding='utf-8', errors='ignore') as f:
-                content = f.read()
-            
-            checks = [
-                ("Physical package : 1", "Physical Package"),
-                ("Size : 00800000", "L3 = 0x00800000 (8MB)")
-            ]
-            
-            passed = True
-            found_items = []
-            for check_str, desc in checks:
-                if check_str in content:
-                    found_items.append(desc)
-                else:
-                    passed = False
-                    print_error(f"SM8550 DSL 缺少: {desc}")
-            
-            if passed:
-                print_success("SM8550 DSL 验证通过")
-                for item in found_items:
-                    print_info(f"• 找到 {item}")
-            else:
-                all_passed = False
-        else:
-            print_info("⚠️  SM8550 DSL 文件不存在（跳过验证）")
-    
-    return all_passed
-
-
-def test_checksum(build_dir, platforms):
-    """测试 5: 校验和验证"""
-    print_section("🔐 测试 5: 校验和验证")
-    
-    all_passed = True
-    for platform in platforms:
-        aml_file = build_dir / platform / "builtin" / "PPTT.aml"
-        
-        if aml_file.exists():
+        for aml_file in aml_files:
             try:
                 with open(aml_file, 'rb') as f:
-                    f.seek(9)  # 跳到 checksum 字节
-                    checksum = struct.unpack('B', f.read(1))[0]
-                print_success(f"{platform}: Checksum = 0x{checksum:02x}")
+                    data = f.read()
+                    # ACPI table checksum should make the sum of all bytes == 0 (mod 256)
+                    checksum = sum(data) & 0xFF
+                    if checksum == 0:
+                        print_success(f"{target}/{aml_file.name}: Checksum valid (sum=0)")
+                    else:
+                        print_error(f"{target}/{aml_file.name}: Checksum invalid (sum={checksum})")
+                        all_passed = False
             except Exception as e:
-                print_error(f"{platform}: 无法读取校验和 - {e}")
+                print_error(f"{target}/{aml_file.name}: Cannot read checksum - {e}")
                 all_passed = False
-        else:
-            print_error(f"{platform}: PPTT.aml 不存在")
-            all_passed = False
+    
+    return all_passed
+
+
+def test_aml_signature_match(build_dir, targets):
+    """Test 6: Verify AML file signature matches filename"""
+    print_section("🏷️  Test 6: AML Signature Match Verification")
+    
+    all_passed = True
+    for target in targets:
+        target_dir = build_dir / target
+        aml_files = list(target_dir.glob('*.aml'))
+        
+        for aml_file in aml_files:
+            try:
+                with open(aml_file, 'rb') as f:
+                    data = f.read()
+                
+                if len(data) < 4:
+                    print_error(f"{target}/{aml_file.name}: File too short to read signature")
+                    all_passed = False
+                    continue
+                
+                # Read the 4-byte ACPI table signature
+                signature = data[0:4].decode('ascii', errors='ignore')
+                
+                # Extract expected signature from filename (e.g., PPTT.aml -> PPTT)
+                expected_signature = aml_file.stem.upper()
+                
+                if signature == expected_signature:
+                    print_success(f"{target}/{aml_file.name}: Signature '{signature}' matches filename")
+                else:
+                    print_error(f"{target}/{aml_file.name}: Signature MISMATCH! File contains '{signature}' but filename suggests '{expected_signature}'")
+                    print_info(f"  This indicates the wrong table was extracted!")
+                    all_passed = False
+            except Exception as e:
+                print_error(f"{target}/{aml_file.name}: Cannot read signature - {e}")
+                all_passed = False
     
     return all_passed
 
 
 def main():
-    """主测试函数"""
-    print_header("PPTT 通用拓扑构建器 - 完整测试套件")
+    """Main test function"""
+    print_header("ACPI Table Generator - Complete Test Suite")
     
-    # 检测项目根目录
+    # Detect project root directory
     script_dir = Path(__file__).parent
     root_dir = script_dir.parent
-    build_dir = root_dir / "build"
+    
+    # Check if build_dir was passed as argument
+    if len(sys.argv) > 1:
+        build_dir = Path(sys.argv[1])
+    else:
+        build_dir = root_dir / "build"
     
     if not build_dir.exists():
-        print_error("构建目录不存在，请先运行 cmake")
-        print(f"   期望目录: {build_dir}")
+        print_error("Build directory does not exist, please run cmake first")
+        print(f"   Expected directory: {build_dir}")
         return 1
     
-    # 切换到构建目录
-    os.chdir(build_dir)
+    # Discover all device targets
+    targets = discover_device_targets(build_dir)
     
-    # 自动检测所有平台（从 include 目录）
-    include_dir = root_dir / "include"
-    platforms = []
-    if include_dir.exists():
-        for item in include_dir.iterdir():
-            if item.is_dir() and item.name != "common":
-                # 检查是否有对应的可执行文件
-                exe_name = f"pptt_generator_{item.name}"
-                if (build_dir / exe_name).exists() or (build_dir / f"{exe_name}.exe").exists():
-                    platforms.append(item.name)
+    if not targets:
+        print_error("No device targets found in build directory")
+        return 1
     
-    if not platforms:
-        # 回退到硬编码列表
-        platforms = ["sm8850", "sm8550", "sm8150"]
+    print(f"Found {len(targets)} device target(s): {', '.join(targets)}")
     
-    platforms.sort()  # 按字母顺序排序
-    
-    # 运行所有测试
+    # Run all tests
     results = {}
     
-    results['compilation'] = test_compilation(build_dir, platforms)
-    results['file_generation'] = test_file_generation(build_dir, platforms)
-    results['topology'] = test_topology_verification(build_dir, platforms)
-    results['dsl_validation'] = test_dsl_validation(build_dir, platforms)
-    results['checksum'] = test_checksum(build_dir, platforms)
+    results['aml_generation'] = test_aml_generation(build_dir, targets)
+    results['aml_signature'] = test_aml_signature_match(build_dir, targets)
+    results['dsl_decompilation'] = test_dsl_decompilation(build_dir, targets)
+    results['dsl_no_errors'] = test_dsl_no_errors(build_dir, targets)
+    results['node_references'] = test_node_references(build_dir, targets)
+    results['checksum'] = test_checksum(build_dir, targets)
     
-    # 总结
-    print_header("✅ 测试总结")
+    # Summary
+    print_header("✅ Test Summary")
     
     test_names = [
-        ('compilation', '编译所有平台'),
-        ('file_generation', '验证文件生成'),
-        ('topology', '拓扑结构验证'),
-        ('dsl_validation', 'DSL 反编译成功'),
-        ('checksum', '校验和正确')
+        ('aml_generation', 'AML File Generation'),
+        ('aml_signature', 'AML Signature Match'),
+        ('dsl_decompilation', 'DSL Decompilation'),
+        ('dsl_no_errors', 'DSL No Errors'),
+        ('node_references', 'Node Reference Verification'),
+        ('checksum', 'Checksum Valid')
     ]
     
     passed_count = sum(1 for result in results.values() if result)
     total_count = len(results)
     
-    print("测试结果:")
+    print("Test Results:")
     for key, name in test_names:
-        status = "✅ 通过" if results[key] else "❌ 失败"
+        status = "✅ PASS" if results[key] else "❌ FAIL"
         print(f"  [{status}] {name}")
     
-    print(f"\n总计: {passed_count}/{total_count} 测试通过")
+    print(f"\nTotal: {passed_count}/{total_count} tests passed")
     
     if passed_count == total_count:
-        print(f"\n{Colors.GREEN}🎉 通用拓扑构建器工作正常！{Colors.ENDC}\n")
+        print(f"\n{Colors.GREEN}🎉 All tests passed!{Colors.ENDC}\n")
         return 0
     else:
-        print(f"\n{Colors.RED}⚠️  部分测试失败，请检查输出{Colors.ENDC}\n")
+        print(f"\n{Colors.RED}⚠️  Some tests failed, please check the output{Colors.ENDC}\n")
         return 1
 
 

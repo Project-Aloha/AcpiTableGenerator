@@ -1,18 +1,46 @@
-#ifndef COMMON_H
-#define COMMON_H
+#pragma once
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-// 通用头文件，用于包含所有公共定义
+// Size ops
+#define SIZE_1B 1ULL
+#define SIZE_1KB (1024ULL * SIZE_1B)
+#define SIZE_1MB (1024ULL * SIZE_1KB)
+#define SIZE_1GB (1024ULL * SIZE_1MB)
+#define SIZE_B(x) ((x) * SIZE_1B)
+#define SIZE_KB(x) ((x) * SIZE_1KB)
+#define SIZE_MB(x) ((x) * SIZE_1MB)
+#define SIZE_GB(x) ((x) * SIZE_1GB)
 
-// 大小单位宏定义
-#define SIZE_1B     1ULL
-#define SIZE_1KB    (1024ULL * SIZE_1B)
-#define SIZE_1MB    (1024ULL * SIZE_1KB)
-#define SIZE_1GB    (1024ULL * SIZE_1MB)
+// Bit ops
+#define BIT(x) (1ULL << (x))
+#define GEN_MSK(high, low) (((BIT((high) + 1) - 1) & ~((BIT(low)) - 1)))
 
-// 参数化大小宏定义
-#define SIZE_B(x)   ((x) * SIZE_1B)
-#define SIZE_KB(x)  ((x) * SIZE_1KB)
-#define SIZE_MB(x)  ((x) * SIZE_1MB)
-#define SIZE_GB(x)  ((x) * SIZE_1GB)
+#define SET_BITS(mask, value)                                                  \
+  (((unsigned long long)(value)                                                \
+    << __builtin_ctzll((unsigned long long)(mask))) &                          \
+   (unsigned long long)(mask))
 
-#endif // COMMON_H
+// Standard type definitions
+typedef uint8_t UINT8;
+typedef uint16_t UINT16;
+typedef uint32_t UINT32;
+typedef uint64_t UINT64;
+typedef size_t UINTN;
+typedef int8_t INT8;
+typedef int16_t INT16;
+typedef int32_t INT32;
+typedef int64_t INT64;
+#define TRUE true;
+#define FALSE false;
+typedef bool BOOLEAN;
+typedef void VOID;
+
+/* For generator parsing acpi table in compiled binary */
+#define ACPI_TABLE_START_MAGIC 'A', 'C', 'G', 'S'
+#define ACPI_TABLE_END_MAGIC 'A', 'C', 'G', 'E'
+#define ACPI_TABLE_DEFINE_START UINT8 StartMagic[4];
+#define ACPI_TABLE_DEFINE_END UINT8 EndMagic[4];
+#define ACPI_TABLE_DECLARE_START .StartMagic = {ACPI_TABLE_START_MAGIC}
+#define ACPI_TABLE_DECLARE_END .EndMagic = {ACPI_TABLE_END_MAGIC}
