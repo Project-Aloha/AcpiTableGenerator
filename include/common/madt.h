@@ -8,6 +8,8 @@
 
 #define ACPI_MADT_TABLE_STRUCTURE_NAME MULTI_APIC_DESCRIPTION_TABLE
 
+// #define GICC_HAS_TRBE_INTERRUPT
+
 typedef struct {
   UINT32 LocalInterruptControllerAddress;
   UINT32 Flags; // Multiple MADT flags
@@ -37,10 +39,19 @@ typedef struct {
   UINT8 ProcessorPowerEfficiencyClass;
   UINT8 Reserved2;
   UINT16 SpeOverflowInterrupt;
+#ifdef GICC_HAS_TRBE_INTERRUPT
+  // Introduced in ACPI 6.5
+  // Windows seems do not support this arg currently
   UINT16 TRBEInterrupt;
+#endif
 } __attribute__((packed)) MADT_GICC_STRUCTURE;
+#ifdef GICC_HAS_TRBE_INTERRUPT
 _Static_assert(sizeof(MADT_GICC_STRUCTURE) == 82,
                "MADT_GICC_STRUCTURE size is incorrect");
+#else
+_Static_assert(sizeof(MADT_GICC_STRUCTURE) == 80,
+               "MADT_GICC_STRUCTURE size is incorrect");
+#endif
 
 // GICC CPU Interface Flags
 #define MADT_GICC_FLAG_ENABLED BIT(0)
@@ -180,6 +191,7 @@ _Static_assert(sizeof(MADT_GIC_ITS_STRUCTURE) == 20,
       .Reserved2 = 0,                                                          \
   }
 
+#ifdef GICC_HAS_TRBE_INTERRUPT
 #define MADT_DECLARE_GICC_STRUCTURE(index, cpu_id, mpidr)                      \
   .GiccStructures[index] = {                                                   \
       .Type = 0xB,                                                             \
@@ -202,6 +214,29 @@ _Static_assert(sizeof(MADT_GIC_ITS_STRUCTURE) == 20,
       .SpeOverflowInterrupt = 0,                                               \
       .TRBEInterrupt = 0,                                                      \
   }
+#else
+#define MADT_DECLARE_GICC_STRUCTURE(index, cpu_id, mpidr)                      \
+  .GiccStructures[index] = {                                                   \
+      .Type = 0xB,                                                             \
+      .Length = sizeof(MADT_GICC_STRUCTURE),                                   \
+      .Reserved = 0,                                                           \
+      .CPUInterfaceNumber = cpu_id,                                            \
+      .ACPIProcessorUID = cpu_id,                                              \
+      .Flags = MADT_GICC_FLAG_ENABLED,                                         \
+      .ParkingProtocolVersion = 0,                                             \
+      .PerformanceInterruptGSI = GICC_PERFORMANCE_INTERRUPT_GSI,               \
+      .ParkedAddress = 0,                                                      \
+      .PhysicalBaseAddress = 0,                                                \
+      .GICV = 0,                                                               \
+      .GICH = 0,                                                               \
+      .VGICMaintenanceInterrupt = GICC_VGIC_MAINTENANCE_INTERRUPT,             \
+      .GICRBaseAddress = GICR_BASE_ADDRESS + GICR_STRIDE * cpu_id,             \
+      .MPIDR = mpidr,                                                          \
+      .ProcessorPowerEfficiencyClass = CPUID_TO_CLUSTER(cpu_id),               \
+      .Reserved2 = 0,                                                          \
+      .SpeOverflowInterrupt = 0,                                               \
+  }
+#endif
 
 #define MADT_DEFINE_TABLE(core_count, its_count, name)                         \
   typedef struct {                                                             \
