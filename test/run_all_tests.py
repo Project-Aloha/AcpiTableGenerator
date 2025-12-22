@@ -139,34 +139,65 @@ def test_dsl_decompilation(build_dir, targets):
 
 
 def test_dsl_no_errors(build_dir, targets):
-    """Test 3: Verify DSL files have no errors"""
+    """Test 3: Verify DSL files have no errors.
+
+    Strategy:
+      - If `iasl` is available in PATH, attempt to compile each .dsl with `iasl -tc` and use
+        the compiler exit code/output to detect errors (more reliable).
+      - Otherwise, fall back to scanning for a broader set of error keywords while
+        excluding known benign phrases.
+    """
     print_section("🔍 Test 3: Verify DSL Files Have No Errors")
-    
+
+    import shutil
+
     all_passed = True
+    iasl_path = shutil.which('iasl')
+    if iasl_path:
+        print_info(f"Using iasl at: {iasl_path} to validate DSL files")
+    else:
+        print_info("iasl not found: falling back to keyword scanning for errors")
+
+    # Patterns considered indicative of errors (case-insensitive)
+    ERROR_PATTERNS = [r'\berror\b', r'\bfatal\b', r'\bfailed\b', r'\binvalid\b', r'\bsyntax\b', r'\bunknown\b', r'\bassert\b']
+    # Known benign substrings to ignore
+    BENIGN_SUBSTRINGS = ['Error checking', 'No errors found', 'no error']
+
     for target in targets:
         target_dir = build_dir / target
         dsl_files = list(target_dir.glob('*.dsl'))
-        
+
         for dsl_file in dsl_files:
-            with open(dsl_file, 'r', encoding='utf-8', errors='ignore') as f:
-                content = f.read()
-            
-            # Check for error patterns but exclude "Error checking" and similar benign patterns
-            error_lines = []
-            for line in content.split('\n'):
-                if re.search(r'\berror\b', line, re.IGNORECASE):
-                    # Exclude known benign patterns
-                    if 'Error checking' not in line:
-                        error_lines.append(line.strip())
-            
-            if error_lines:
-                print_error(f"{target}/{dsl_file.name}: Contains error keyword")
-                for line in error_lines[:3]:  # Show first 3 errors
-                    print_info(f"  {line}")
-                all_passed = False
+            if iasl_path:
+                print_info(f"  Compiling {target}/{dsl_file.name} with iasl...")
+                returncode, stdout, stderr = run_command([iasl_path, '-tc', str(dsl_file)])
+                if returncode != 0:
+                    print_error(f"{target}/{dsl_file.name}: iasl compilation FAILED (rc={returncode})")
+                    # Show first few stderr lines for debugging
+                    for line in (stderr or stdout).splitlines()[:6]:
+                        print_info(f"  {line}")
+                    all_passed = False
+                else:
+                    # iasl may emit warnings on stdout/stderr; treat them as info
+                    print_success(f"{target}/{dsl_file.name}: iasl compile OK")
             else:
-                print_success(f"{target}/{dsl_file.name}: No errors found")
-    
+                # Fallback textual scan
+                content = dsl_file.read_text(encoding='utf-8', errors='ignore')
+                error_lines = []
+                for line in content.split('\n'):
+                    l = line.strip()
+                    if any(re.search(p, l, re.IGNORECASE) for p in ERROR_PATTERNS):
+                        if not any(b in l for b in BENIGN_SUBSTRINGS):
+                            error_lines.append(l)
+
+                if error_lines:
+                    print_error(f"{target}/{dsl_file.name}: Contains error-like keywords")
+                    for line in error_lines[:3]:
+                        print_info(f"  {line}")
+                    all_passed = False
+                else:
+                    print_success(f"{target}/{dsl_file.name}: No error-like keywords found")
+
     return all_passed
 
 

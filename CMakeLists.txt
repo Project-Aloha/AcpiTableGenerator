@@ -36,11 +36,13 @@ target_include_directories(acpi_extractor PRIVATE
 
 # Define supported ACPI table types and their corresponding source files
 # Format: TABLE_NAME -> (header_file, source_file)
-set(ACPI_TABLE_TYPES "pptt;madt")
+set(ACPI_TABLE_TYPES "pptt;madt;mcfg")
 set(ACPI_TABLE_pptt_HEADER "pptt.h")
 set(ACPI_TABLE_pptt_SOURCE "src/dummy/pptt.c")
 set(ACPI_TABLE_madt_HEADER "madt.h")
 set(ACPI_TABLE_madt_SOURCE "src/dummy/madt.c")
+set(ACPI_TABLE_mcfg_HEADER "mcfg.h")
+set(ACPI_TABLE_mcfg_SOURCE "src/dummy/mcfg.c")
 
 # Scan include/vendor directory for all vendors and targets
 file(GLOB VENDOR_DIRS "${CMAKE_SOURCE_DIR}/include/vendor/*")
