@@ -95,7 +95,6 @@ foreach(VENDOR_DIR ${VENDOR_DIRS})
                         # Set include directories
                         target_include_directories(${TARGET_NAME} PRIVATE 
                             ${CMAKE_SOURCE_DIR}/include
-                            ${CMAKE_SOURCE_DIR}/include/vendor
                             ${VENDOR_DIR}
                             ${TARGET_DIR}
                         )

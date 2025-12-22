@@ -5,6 +5,7 @@
 *.dts
 *.dtb
 *.pyc
+*dts
 
 .cache/
 build/

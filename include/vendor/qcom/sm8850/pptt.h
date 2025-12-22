@@ -1,17 +1,8 @@
 #pragma once
 #include "table_header.h"
 #include <common/pptt.h>
-#include <stddef.h>
-#include <sys/cdefs.h>
 
 /* Platform specific configuration */
-#define NUM_CORES 8
-#define NUM_CLUSTERS 2
-#define NUM_SYSTEM 1
-#define L1_CACHES_COUNT 2
-#define L2_CACHES_COUNT 1
-#define L3_CACHES_COUNT 0
-
 #define SYSTEM_PRIVATE_RESOURCES_COUNT 1       // ID
 #define CLUSTER_PRIVATE_RESOURCES_COUNT 1      // L2 Cache
 #define PHYSICAL_CPU_PRIVATE_RESOURCES_COUNT 2 // L1I, L1D

@@ -239,6 +239,36 @@ def test_checksum(build_dir, targets):
     return all_passed
 
 
+def test_madt_apic_workaround():
+    """Test: MADT <-> APIC signature equivalence workaround"""
+    print_section("⚙️ Test: MADT ↔ APIC Signature Workaround")
+    from aml_validator import validate_aml_file
+    import tempfile
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "MADT.aml"
+            # Minimal AML header: signature 'APIC', length 36, remainder zero
+            # Build a minimal 36-byte ACPI header with signature 'APIC' and a valid checksum
+            hdr = bytearray(36)
+            hdr[0:4] = b'APIC'
+            hdr[4:8] = struct.pack('<I', 36)
+            # Calculate checksum so sum(hdr) % 256 == 0
+            checksum = (256 - (sum(hdr) % 256)) % 256
+            hdr[9] = checksum
+            with open(path, 'wb') as f:
+                f.write(hdr)
+            ok = validate_aml_file(str(path))
+            if ok:
+                print_success("MADT expected file with 'APIC' signature accepted")
+                return True
+            else:
+                print_error("MADT expected file with 'APIC' signature was rejected")
+                return False
+    except Exception as e:
+        print_error(f"Exception during workaround test - {e}")
+        return False
+
+
 def test_aml_signature_match(build_dir, targets):
     """Test 6: Verify AML file signature matches filename"""
     print_section("🏷️  Test 6: AML Signature Match Verification")
@@ -267,9 +297,14 @@ def test_aml_signature_match(build_dir, targets):
                 if signature == expected_signature:
                     print_success(f"{target}/{aml_file.name}: Signature '{signature}' matches filename")
                 else:
-                    print_error(f"{target}/{aml_file.name}: Signature MISMATCH! File contains '{signature}' but filename suggests '{expected_signature}'")
-                    print_info(f"  This indicates the wrong table was extracted!")
-                    all_passed = False
+                    # Allow known equivalences (e.g., APIC accepted for MADT)
+                    EQUIVALENCES = {'MADT': ['APIC'], 'APIC': ['MADT']}
+                    if signature in EQUIVALENCES.get(expected_signature, []):
+                        print_success(f"{target}/{aml_file.name}: Signature '{signature}' accepted as equivalent to expected '{expected_signature}' (compatibility workaround)")
+                    else:
+                        print_error(f"{target}/{aml_file.name}: Signature MISMATCH! File contains '{signature}' but filename suggests '{expected_signature}'")
+                        print_info(f"  This indicates the wrong table was extracted!")
+                        all_passed = False
             except Exception as e:
                 print_error(f"{target}/{aml_file.name}: Cannot read signature - {e}")
                 all_passed = False
@@ -314,6 +349,7 @@ def main():
     results['dsl_no_errors'] = test_dsl_no_errors(build_dir, targets)
     results['node_references'] = test_node_references(build_dir, targets)
     results['checksum'] = test_checksum(build_dir, targets)
+    results['madt_apic_workaround'] = test_madt_apic_workaround()
     
     # Summary
     print_header("✅ Test Summary")
@@ -324,7 +360,8 @@ def main():
         ('dsl_decompilation', 'DSL Decompilation'),
         ('dsl_no_errors', 'DSL No Errors'),
         ('node_references', 'Node Reference Verification'),
-        ('checksum', 'Checksum Valid')
+        ('checksum', 'Checksum Valid'),
+        ('madt_apic_workaround', 'MADT/APIC Signature Workaround')
     ]
     
     passed_count = sum(1 for result in results.values() if result)

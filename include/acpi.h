@@ -42,16 +42,18 @@ _Static_assert(sizeof(ACPI_TABLE_HEADER) == 36,
       .CreatorRevision = ACPI_CREATOR_REVISION,                                \
   }
 
-#define ACPI_TABLE_WITH_MAGIC(type)                                            \
+#define _ACPI_TABLE_WITH_MAGIC(type)                                           \
   typedef struct {                                                             \
     ACPI_TABLE_DEFINE_START;                                                   \
     type ACPI_TABLE;                                                           \
     ACPI_TABLE_DEFINE_END;                                                     \
   } __attribute__((packed)) ACPI_TABLE_##type##_WITH_MAGIC;
+#define ACPI_TABLE_WITH_MAGIC(type) _ACPI_TABLE_WITH_MAGIC(type)
 
-#define ACPI_TABLE_START(type)                                                 \
+#define _ACPI_TABLE_START(type)                                                \
   ACPI_TABLE_##type##_WITH_MAGIC table_with_magic = {ACPI_TABLE_DECLARE_START, \
                                                      .ACPI_TABLE =
+#define ACPI_TABLE_START(type) _ACPI_TABLE_START(type)
 
 #define ACPI_TABLE_END(type)                                                   \
   , ACPI_TABLE_DECLARE_END,                                                    \

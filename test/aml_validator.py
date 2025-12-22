@@ -113,14 +113,26 @@ def validate_aml_file(file_path):
     
     # Get expected signature from filename
     expected_signature = Path(file_path).stem.upper()
-    
-    # Validate signature matches filename
-    if header.signature != expected_signature:
+
+    # Known signature equivalences: expected -> list of acceptable actual signatures.
+    SIGNATURE_EQUIVALENCES = {
+        'MADT': ['APIC'],  # APIC is equivalent to MADT
+        'APIC': ['MADT'],
+    }
+
+    # Validate signature matches filename (allow known equivalences)
+    allowed_sigs = [expected_signature] + SIGNATURE_EQUIVALENCES.get(expected_signature, [])
+    if header.signature not in allowed_sigs:
         print(f"❌ CRITICAL: Signature MISMATCH!")
         print(f"   File contains '{header.signature}' but filename suggests '{expected_signature}'")
         print(f"   This indicates the wrong table was extracted!")
         return False
-    print(f"✅ Table signature matches filename: {header.signature}")
+    else:
+        if header.signature == expected_signature:
+            print(f"✅ Table signature matches filename: {header.signature}")
+        else:
+            # Accept known equivalence (e.g., APIC == MADT)
+            print(f"✅ Table signature '{header.signature}' accepted as equivalent to expected '{expected_signature}' (compatibility workaround)")
     
     # Validate length
     if header.length != len(data):
