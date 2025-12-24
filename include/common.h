@@ -40,6 +40,7 @@ typedef bool BOOLEAN;
 typedef void VOID;
 typedef char CHAR8;
 _Static_assert(sizeof(CHAR8) == 1, "CHAR8 size incorrect");
+#define STATIC static
 
 /* For generator parsing acpi table in compiled binary */
 #define ACPI_TABLE_START_MAGIC 'A', 'C', 'G', 'S'
