@@ -82,9 +82,10 @@ int main(int argc, char **argv) {
         table_size, table_end_offset - table_start_offset);
   }
 
-  // Calculate and correct checksum
-  table_header->Checksum =
-      checksum(input_binary.fileBuffer + table_start_offset, table_size);
+  // Calculate and correct checksum if needed
+  if (memcmp(table_header->Signature, "FACS", 4) != 0)
+    table_header->Checksum =
+        checksum(input_binary.fileBuffer + table_start_offset, table_size);
 
   // Check if output file string does not exist
   if (argc == 2) {

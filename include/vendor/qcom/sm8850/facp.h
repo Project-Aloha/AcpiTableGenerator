@@ -1,5 +1,4 @@
 #pragma once
-#include "acpi.h"
 #include "table_header.h"
 #include <common/facp.h>
 
