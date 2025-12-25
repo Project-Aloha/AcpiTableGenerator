@@ -34,9 +34,20 @@ target_include_directories(acpi_extractor PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
+# Build iort_reader tool
+add_executable(iort_reader src/iort_reader.c lib/utils.c)
+target_include_directories(iort_reader PRIVATE 
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+# Ensure tools are built by default
+add_custom_target(tools ALL DEPENDS acpi_extractor iort_reader)
+
 # Define supported ACPI table types and their corresponding source files
 # Format: TABLE_NAME -> (header_file, source_file)
-set(ACPI_TABLE_TYPES "pptt;madt;mcfg")
+set(ACPI_TABLE_TYPES "pptt;madt;dbg2;mcfg")
+set(ACPI_TABLE_dbg2_HEADER "dbg2.h")
+set(ACPI_TABLE_dbg2_SOURCE "src/dummy/dbg2.c")
 set(ACPI_TABLE_pptt_HEADER "pptt.h")
 set(ACPI_TABLE_pptt_SOURCE "src/dummy/pptt.c")
 set(ACPI_TABLE_madt_HEADER "madt.h")
@@ -126,7 +137,7 @@ foreach(DEVICE_TARGET ${ALL_DEVICE_TARGETS})
 endforeach()
 
 # Ensure acpi_extractor is built first
-add_dependencies(build_all_devices acpi_extractor)
+add_dependencies(build_all_devices acpi_extractor iort_reader)
 
 # Collect all DSL files for testing
 set(ALL_DSL_FILES "")
