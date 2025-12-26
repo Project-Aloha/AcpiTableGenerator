@@ -1,55 +1,22 @@
-# acpi-table-generator
-
-**English** | **[简体中文](README.zh.md)**
+# ACPI table genetor
+This is a tool aim to generate common acpi table aml files for multiple platforms. It also provides tools to gather infomations from android device tree.
 
 ---
 
-**Universal ACPI Table Generator** - Multi-purpose ACPI table generator supporting various ACPI table types for complex hardware topologies
-
-## ✨ Features
-
-- **🔧 Multi-Table ACPI Generator** - Supports multiple ACPI table types (PPTT, MADT, and more planned)
-- **🎯 PPTT Topology Builder** - Universal CPU topology builder supporting multiple cache architectures
-- **🔄 Heterogeneous Support** - Supports mixed configurations of different core types (P-Core/M-Core/E-Core)
-- **📐 Flexible Hierarchy** - Supports arbitrary combinations of 2-4 clusters and 2-4 level cache hierarchies
-- **✅ Automated Validation** - Integrated iasl disassembly and Python validation tools
-- **🚀 CMake Build** - Multi-platform parallel compilation, automatically generates AML and DSL
-- **📈 Extensible Architecture** - Modular design for easy addition of new ACPI table types
-
-## 🏗️ Supported Platforms
-
-| Platform | SoC | Architecture | Cores | L2 Type | L3 | File Size |
-|----------|-----|--------------|-------|---------|----|----|
-| **MTK_MT1234** | MediaTek MT1234 | 2 Clusters (4+4) | 8 | Per-Core | - | 434 bytes |
-| **SM8150** | Snapdragon 855 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 2MB | 486 bytes |
-| **SM8250** | Snapdragon 865 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 486 bytes |
-| **SM8350** | Snapdragon 888 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 4MB | 486 bytes |
-| **SM8450** | Snapdragon 8 Gen 1 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 6MB | 558 bytes |
-| **SM8475** | Snapdragon 8+ Gen 1 | 3 Clusters (4E+3M+1P) | 8 | Per-Core | 8MB | 558 bytes |
-| **SM8550** | Snapdragon 8 Gen 2 | 3 Clusters (3E+4M+1P) | 8 | Per-Core | 8MB | 474 bytes |
-| **SM8650** | Snapdragon 8 Gen 3 | 4 Clusters (2E+3M+2M+1P) | 8 | Per-Core | 12MB | 494 bytes |
-| **SM8750** | Snapdragon 8 Elite Gen 2 | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 434 bytes |
-| **SM8850** | Snapdragon 8 Elite | 2 Clusters (6M+2P) | 8 | Per-Cluster | - | 434 bytes |
-
 ## 🚀 Quick Start
-
 ### Step 1: Clone
-
 ```bash
 git clone https://github.com/Project-Aloha/acpi-table-generator.git
 cd acpi-table-generator
 ```
 
-### Step 2: Generate ACPI Tables (PPTT Currently Implemented)
-
+### Step 2: Generate ACPI Tables
 ```bash
 mkdir build && cd build
 cmake ..
 make
 # View generated AML files
-ls -lh qcom_sm8850/PPTT.aml
-ls -lh qcom_sm8550/PPTT.aml
-ls -lh mtk_mt1234/PPTT.aml
+ls -lh qcom_sm8850/*.aml
 ```
 
 ### Step 3: Run Tests
@@ -69,47 +36,37 @@ python3 ../test/aml_validator.py
 ├── src/
 │   ├── acpi_extractor.c     # ACPI table extraction tool
 │   └── dummy/
-│       ├── pptt.c           # PPTT table generator (implemented)
-│       └── madt.c           # MADT table generator (placeholder - planned)
+│       ├── *.c              # dummy C file for a table
 ├── include/
 │   ├── common.h             # Common ACPI structure definitions and macros
 │   ├── common/
-│   │   ├── pptt.h           # PPTT common structure definitions
-│   │   └── madt.h           # MADT common structure definitions (planned)
+│   │   ├── *.h              # Common structure definitions for a table
 │   └── vendor/
 │       ├── mtk/
 │       │   └── mt1234/
-│       │       └── pptt.h   # Placeholder PPTT header for multi-vendor test
+│       │       └── *.h      # Placeholder
 │       └── qcom/
 │           └── sm8850/
-│               ├── pptt.h   # SM8850 PPTT configuration
-│               └── madt.h   # SM8850 MADT configuration
+│               └── *.h      # SM8850 MADT/PPTT/etc configuration
 ├── build/                   # CMake build directory
 │   ├── acpi_extractor       # ACPI table extraction tool
-│   ├── lib*_*.a             # Static libraries for each device-table combination
-│   ├── qcom_sm8850_pptt     # Executable for SM8850 PPTT generation
-│   └── <device>/
-│       ├── PPTT.aml         # Generated PPTT binary AML file
-│       ├── PPTT.dsl         # PPTT iasl disassembled DSL source
-│       └── PPTT_iasl.log    # PPTT iasl execution log
+│   ├── iort_reader          # IORT table extraction tool for qcom devcies
+│   └── <vendor>/
+│       └── <device>/
+│           ├── *.aml        # Generated AML file
+│           ├── *.dsl        # iasl disassembled DSL source
+│           └── *_iasl.log   # iasl execution log
 ├── test/                    # Test tools (Python + Bash)
-│   ├── run_all_tests.py     # Complete test suite (PPTT-focused currently)
-│   ├── verify_topology.py   # PPTT topology structure validation
-│   ├── aml_validator.py     # AML file validation (supports multiple table types)
-│   ├── *_validate.py        # ACPI Table configuration validation
-│   └── verify_*.py          # Additional verification scripts
+│   ├── *.py                 # Complete test suite
 ├── CMakeLists.txt           # CMake configuration file
 ├── README.md                # This file
-├── README.zh.md             # Chinese version
 └── requirements.txt         # Python dependencies
 ```
 
 ## 🛠️ Adding New Platform
 
 ### Method 1: Manual Configuration Creation
-
 #### Step 1: Create Platform Configuration Header
-
 Create new directory under `include/vendor/` and copy template:
 
 ```bash
@@ -117,12 +74,12 @@ Create new directory under `include/vendor/` and copy template:
 mkdir -p include/vendor/qcom/sm8xxx
 
 # Copy reference configuration
-cp include/vendor/qcom/sm8850/pptt.h include/vendor/qcom/sm8xxx/pptt.h
+cp include/vendor/qcom/sm8850/xxxx.h include/vendor/qcom/sm8xxx/xxxx.h
 ```
 
 #### Step 2: Modify Platform Configuration
 
-Edit `include/vendor/qcom/sm8xxx/pptt.h` according to actual hardware.
+Edit `include/vendor/qcom/sm8xxx/xxxx.h` according to actual hardware.
 
 #### Step 3: Rebuild
 
@@ -131,7 +88,7 @@ CMake will automatically detect the new platform:
 ```bash
 cd build
 cmake ..
-make qcom_sm8xxx_pptt
+make qcom_sm8xxx_xxxx
 ```
 
 ## 🤝 Contributing
@@ -160,8 +117,7 @@ Contributions are welcome! Please follow these steps:
 - - Ensure all tests pass
 
 ## 📄 License
-
-This project is licensed under GPL-3.0 - see LICENSE file for details.
+This project is licensed under GPL-3.0 - see [LICENSE](LICENSE.md) file for details.
 
 ## 📞 Contact
 
@@ -179,8 +135,11 @@ This project is licensed under GPL-3.0 - see LICENSE file for details.
 
 - [ACPI Specification 6.6](https://uefi.org/specs/ACPI/6.6/) - ACPI Specification
 - [ARM CPU Architecture](https://developer.arm.com/documentation/) - ARM Architecture Documentation
+- [ARM IORT](  https://developer.arm.com/documentation/den0049/latest) - ARM IO Remapping Table
+- [PCI Sig](https://pcisig.com/) - PCI Firmware Spec v3.3
 - [Qualcomm Snapdragon](https://www.qualcomm.com/snapdragon) - Qualcomm Snapdragon Processors
+- [Microsoft SPCR](https://learn.microsoft.com/en-us/windows-hardware/drivers/bringup/serial-port-console-redirection-table) - Microsoft Serial Port Console Redirection Table
+- [Microsoft DBG2](https://learn.microsoft.com/en-us/windows-hardware/drivers/bringup/acpi-debug-port-table) - Microsoft Debug Port Table 2
 
 ---
-
 **🌟 If this project helps you, please give it a Star!**
