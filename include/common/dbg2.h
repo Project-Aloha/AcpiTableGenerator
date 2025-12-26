@@ -29,6 +29,7 @@ typedef struct {
 _Static_assert(sizeof(DBG2_HEADER_EXTRA_DATA) == 8,
                "DBG2_HEADER_EXTRA_DATA size incorrect");
 
+/* Header Extra Data */
 /* Body Structures */
 enum DBG2_DEBUG_PORT_TYPE {
   DBG2_DEBUG_PORT_TYPE_RESERVED = 0,

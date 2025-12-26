@@ -46,3 +46,10 @@ _Static_assert(sizeof(CHAR8) == 1, "CHAR8 size incorrect");
 #define ACPI_TABLE_DEFINE_END UINT8 EndMagic[4];
 #define ACPI_TABLE_DECLARE_START .StartMagic = {ACPI_TABLE_START_MAGIC}
 #define ACPI_TABLE_DECLARE_END .EndMagic = {ACPI_TABLE_END_MAGIC}
+
+// ARM GIC related conversion macros
+// x means the irq number in device tree.
+#define GIC_SGI(x) (x)
+#define GIC_PPI(x) (16ULL + (x))
+#define GIC_SPI(x) (32ULL + (x))
+#define GIC_LPI(x) (8192ULL + (x))

@@ -45,7 +45,7 @@ add_custom_target(tools ALL DEPENDS acpi_extractor iort_reader)
 
 # Define supported ACPI table types and their corresponding source files
 # Format: TABLE_NAME -> (header_file, source_file)
-set(ACPI_TABLE_TYPES "pptt;gtdt;madt;dbg2;mcfg")
+set(ACPI_TABLE_TYPES "pptt;gtdt;madt;dbg2;mcfg;spcr")
 set(ACPI_TABLE_dbg2_HEADER "dbg2.h")
 set(ACPI_TABLE_dbg2_SOURCE "src/dummy/dbg2.c")
 set(ACPI_TABLE_pptt_HEADER "pptt.h")
@@ -56,6 +56,8 @@ set(ACPI_TABLE_madt_HEADER "madt.h")
 set(ACPI_TABLE_madt_SOURCE "src/dummy/madt.c")
 set(ACPI_TABLE_mcfg_HEADER "mcfg.h")
 set(ACPI_TABLE_mcfg_SOURCE "src/dummy/mcfg.c")
+set(ACPI_TABLE_spcr_HEADER "spcr.h")
+set(ACPI_TABLE_spcr_SOURCE "src/dummy/spcr.c")
 
 # Scan include/vendor directory for all vendors and targets
 file(GLOB VENDOR_DIRS "${CMAKE_SOURCE_DIR}/include/vendor/*")
