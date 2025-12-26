@@ -37,6 +37,6 @@ GTDT_START{
                  .CNTEL0BaseX = 0x17C22000,
                  .PhysicalTimerGSI = 0x28,
                  .VirtualTimerGSI = 0x26,
-                 .CommonFlags = GTDT_BLOCK_COMMONT_FLAGS_TIMER_ALWAYS_ON_CAP,
+                 .CommonFlags = GTDT_BLOCK_COMMONT_FLAG_TIMER_ALWAYS_ON_CAP,
              }},
 } GTDT_END;

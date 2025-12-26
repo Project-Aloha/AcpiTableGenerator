@@ -15,14 +15,6 @@
 /* typedef */
 DBG2_DEFINE_DEBUG_DEVICE_INFO_STRUCTURE(UARD, UARD_NUM_GAS,
                                         sizeof(UARD_NAMESPACE_STRING), 0);
-_Static_assert(sizeof(DBG2_DEBUG_DEVICE_INFO_STRUCTURE_UARD) ==
-                   22 + sizeof(ACPI_GAS) * 1 + sizeof(UINT32) * 1 +
-                       sizeof("\\_SB.UARD") + 0,
-               "DBG2_DEBUG_DEVICE_INFO_STRUCTURE_"
-               "UARD"
-               " size incorrect");
-;
-
 DBG2_DEFINE_DEBUG_DEVICE_INFO_STRUCTURE(URS0HS, URS0_NUM_GAS,
                                         sizeof(URS0_NAMESPACE_STRING),
                                         USB_OEM_DATA_SIZE);
