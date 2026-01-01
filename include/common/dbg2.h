@@ -1,7 +1,9 @@
 #pragma once
 #include <acpi.h>
 #include <common.h>
-/** Reference
+
+/** Microsoft Debug Port Table (DBG2)
+Reference:
     https://learn.microsoft.com/en-us/windows-hardware/drivers/bringup/acpi-debug-port-table
 */
 

@@ -159,7 +159,7 @@ foreach(DEVICE_TARGET ${ALL_DEVICE_TARGETS})
     set(AML_FILE "${TARGET_OUTPUT_DIR}/${TABLE_NAME_UPPER}.aml")
     set(DSL_FILE "${TARGET_OUTPUT_DIR}/${TABLE_NAME_UPPER}.dsl")
     set(DEVICE_IASL_LOG_FILE "${TARGET_OUTPUT_DIR}/iasl.log")
-    set(HEX_OUTPUT_DIR "${CMAKE_BINARY_DIR}/hex")
+    set(HEX_OUTPUT_DIR "${CMAKE_BINARY_DIR}/test")
     file(MAKE_DIRECTORY ${HEX_OUTPUT_DIR})
     
     # Add custom command: extract ACPI table
@@ -178,10 +178,10 @@ foreach(DEVICE_TARGET ${ALL_DEVICE_TARGETS})
         add_custom_command(
             OUTPUT ${DSL_FILE}
             COMMAND ${IASL_EXECUTABLE} -d ${AML_FILE} >> ${DEVICE_IASL_LOG_FILE} 2>&1 || true
-            COMMAND ${CMAKE_COMMAND} -E rename ${HEX_OUTPUT_DIR}/${TABLE_NAME_UPPER}.hex ${HEX_OUTPUT_DIR}/${DEVICE_NAME}_${TABLE_NAME_UPPER}.hex 2>/dev/null || true
+            COMMAND /bin/bash -c "[ -f '${TARGET_OUTPUT_DIR}/${TABLE_NAME_UPPER}.hex' ] && mv '${TARGET_OUTPUT_DIR}/${TABLE_NAME_UPPER}.hex' '${HEX_OUTPUT_DIR}/${DEVICE_NAME}_${TABLE_NAME_UPPER}.hex' || true"
             COMMAND ${CMAKE_COMMAND} -E rename ${TARGET_OUTPUT_DIR}/${TABLE_NAME_UPPER}.dsl ${DSL_FILE} || true
             DEPENDS ${AML_FILE}
-            WORKING_DIRECTORY ${HEX_OUTPUT_DIR}
+            WORKING_DIRECTORY ${TARGET_OUTPUT_DIR}
             COMMENT "Decompiling ${DEVICE_NAME}/${TABLE_NAME_UPPER}.aml -> ${TABLE_NAME_UPPER}.dsl (log: iasl.log)..."
             VERBATIM
         )
