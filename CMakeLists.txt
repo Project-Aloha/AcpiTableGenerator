@@ -34,6 +34,12 @@ target_include_directories(acpi_extractor PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
+# Build iort_reader tool
+add_executable(iort_reader src/iort_reader.c lib/utils.c)
+target_include_directories(iort_reader PRIVATE 
+    ${CMAKE_SOURCE_DIR}/include
+)
+
 # Automatically scan src/dummy/ for ACPI table source files
 # Each .c file corresponds to a table type (e.g., csrt.c -> csrt table type)
 file(GLOB DUMMY_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/dummy/*.c")
