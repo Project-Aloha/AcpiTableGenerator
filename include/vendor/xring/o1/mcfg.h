@@ -3,8 +3,8 @@
 #include <common/mcfg.h>
 
 #define PCI_EC_SPACE_COUNT 2
-#define PCI_EC_0_BASE_ADDRESS 0xD0000000ULL  /* pcie@cd800000 */
-#define PCI_EC_1_BASE_ADDRESS 0xD8000000ULL  /* pcie@ce400000 */
+#define PCI_EC_0_BASE_ADDRESS 0xCFA00000ULL  /* pcie@cd800000 config */
+#define PCI_EC_1_BASE_ADDRESS 0xD7A00000ULL  /* pcie@ce400000 config */
 
 
 MCFG_DEFINE_TABLE(PCI_EC_SPACE_COUNT);
