@@ -269,3 +269,9 @@ typedef struct {
   // Array of IDs mapping
 } __attribute__((packed)) IORT_IWB_NODE;
 _Static_assert(sizeof(IORT_IWB_NODE) == 30, "IORT_IWB_NODE size incorrect");
+
+/* IORT Table with Magic */
+#define IORT_DEFINE_WITH_MAGIC                                                 \
+  ACPI_TABLE_WITH_MAGIC(ACPI_IORT_TABLE_STRUCTURE_NAME)
+#define IORT_START ACPI_TABLE_START(ACPI_IORT_TABLE_STRUCTURE_NAME)
+#define IORT_END ACPI_TABLE_END(ACPI_IORT_TABLE_STRUCTURE_NAME)
