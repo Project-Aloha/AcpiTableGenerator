@@ -26,12 +26,16 @@ PPTT_START{
     PPTT_DECLARE_PROCESSOR_HIERARCHY_SYSTEM(0, 0, PPTT_REFERENCE_ID),
 
     /* Caches */
-    // L2 Caches
-    PPTT_DECLARE_SIMPLE_CACHE(0, 0), // Shared
+    // Shared L3 cache
+    PPTT_DECLARE_SIMPLE_CACHE(0, 0),
 
-    // L1 Caches
-    PPTT_DECLARE_SIMPLE_CACHE(1, 0), // Cluster 0
-    PPTT_DECLARE_SIMPLE_CACHE(2, 0), // Cluster 0
+    // L2 caches
+    PPTT_DECLARE_SIMPLE_CACHE(1, PPTT_REFERENCE_CACHE(0)),
+    PPTT_DECLARE_SIMPLE_CACHE(2, PPTT_REFERENCE_CACHE(0)),
+
+    // L1 caches
+    PPTT_DECLARE_SIMPLE_CACHE(3, PPTT_REFERENCE_CACHE(1)),
+    PPTT_DECLARE_SIMPLE_CACHE(4, PPTT_REFERENCE_CACHE(1)),
 
     /* Processor Hierarchy Nodes */
     // Clusters
@@ -41,28 +45,28 @@ PPTT_START{
     //  - private resources
     //    - L2 Cache 0
     PPTT_DECLARE_PROCESSOR_HIERARCHY_CLUSTER(0, 0, PPTT_REFERENCE_SYSTEM,
-                                             PPTT_REFERENCE_CACHE(0)),
+                                             PPTT_REFERENCE_CACHE(1)),
     // Cluster 1
     //  - parents
     //    - System
     //  - private resources
     //    - L2 Cache 1
     PPTT_DECLARE_PROCESSOR_HIERARCHY_CLUSTER(1, 0, PPTT_REFERENCE_SYSTEM,
-                                             PPTT_REFERENCE_CACHE(0)),
+                                             PPTT_REFERENCE_CACHE(1)),
     // Cluster 2
     //  - parents
     //    - System
     //  - private resources
     //    - L2 Cache 1
     PPTT_DECLARE_PROCESSOR_HIERARCHY_CLUSTER(2, 0, PPTT_REFERENCE_SYSTEM,
-                                             PPTT_REFERENCE_CACHE(0)),
+                                             PPTT_REFERENCE_CACHE(2)),
     // Cluster 3
     //  - parents
     //    - System
     //  - private resources
     //    - L2 Cache 1
     PPTT_DECLARE_PROCESSOR_HIERARCHY_CLUSTER(3, 0, PPTT_REFERENCE_SYSTEM,
-                                             PPTT_REFERENCE_CACHE(0)),
+                                             PPTT_REFERENCE_CACHE(2)),
 
     // Physical CPUs
     // Cluster 0 CPUs
@@ -72,11 +76,11 @@ PPTT_START{
     //    - L1 ICache 0
     //    - L1 DCache 0
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        0, 0, PPTT_REFERENCE_CLUSTER(0), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        0, 0, PPTT_REFERENCE_CLUSTER(0), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        1, 1, PPTT_REFERENCE_CLUSTER(0), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        1, 1, PPTT_REFERENCE_CLUSTER(0), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
 
     // Cluster 1 CPUs
     // - parents
@@ -85,11 +89,11 @@ PPTT_START{
     //   - L1 ICache 1
     //   - L1 DCache 1
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        2, 2, PPTT_REFERENCE_CLUSTER(1), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        2, 2, PPTT_REFERENCE_CLUSTER(1), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        3, 3, PPTT_REFERENCE_CLUSTER(1), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        3, 3, PPTT_REFERENCE_CLUSTER(1), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
 
     // Cluster 2 CPUs
     // - parents
@@ -98,17 +102,17 @@ PPTT_START{
     //   - L1 ICache 2
     //   - L1 DCache 2
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        4, 4, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        4, 4, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        5, 5, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        5, 5, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        6, 6, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        6, 6, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        7, 7, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        7, 7, PPTT_REFERENCE_CLUSTER(2), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
         
     // Cluster 3 CPUs
     // - parents
@@ -117,9 +121,9 @@ PPTT_START{
     //   - L1 ICache 3
     //   - L1 DCache 3
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        8, 8, PPTT_REFERENCE_CLUSTER(3), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        8, 8, PPTT_REFERENCE_CLUSTER(3), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
     PPTT_DECLARE_PROCESSOR_HIERARCHY_PHYSICAL_CPU(
-        9, 9, PPTT_REFERENCE_CLUSTER(3), PPTT_REFERENCE_CACHE(1),
-        PPTT_REFERENCE_CACHE(2)),
+        9, 9, PPTT_REFERENCE_CLUSTER(3), PPTT_REFERENCE_CACHE(3),
+        PPTT_REFERENCE_CACHE(4)),
 } PPTT_END
