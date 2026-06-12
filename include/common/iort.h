@@ -9,7 +9,7 @@ Reference:
 
 /* Table signature */
 #define ACPI_IORT_SIGNATURE 'I', 'O', 'R', 'T'
-#define ACPI_IORT_REVISION 7
+#define ACPI_IORT_REVISION 0
 
 #define ACPI_IORT_TABLE_STRUCTURE_NAME IO_REMAPPING_TABLE
 
